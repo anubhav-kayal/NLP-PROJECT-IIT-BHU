@@ -8,7 +8,7 @@ The project integrates microphone-based audio acquisition with transcription and
 
 # Project Structure
 
-
+```text
 NLP-PROJECT-IIT-BHU/
 ├── ai/
 │   ├── main_system.py          # Main NLP orchestration pipeline
@@ -85,3 +85,6 @@ IIT BHU NLP Project Team
 License
 
 This project is intended for academic and research purposes under IIT BHU initiatives.
+
+
+
