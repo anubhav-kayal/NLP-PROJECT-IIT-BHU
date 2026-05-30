@@ -1,93 +1,177 @@
+import sys
+import wave
+import struct
+import math
+import tempfile
 import os
 import time
-from microphone_input import MicrophoneRecorder
-from pii_mask import IndianPIIAnonymizer
+import pyaudio
+from pii_mask import PIIMask
 from transcriber import LocalTranscriber
 
-# --- CONFIGURATION ---
-RECORD_DURATION = 5        # How long to listen (seconds)
-# ---------------------
+SAMPLE_RATE    = 16000
+CHANNELS       = 1
+FORMAT         = pyaudio.paInt16
+CHUNK          = 1024
+RECORD_SECONDS = 4
+BEEP_DURATION  = 0.35
 
-def main():
-    print("="*60)
-    print("PRIVACY-PRESERVING VOICE ASSISTANT (SOFTWARE ONLY)")
-    print("System Starting... (Loading AI Models)")
-    print("="*60)
+BEEP_FREQUENCIES = {
+    "PERSON":   880,
+    "PER":      880,
+    "AADHAAR":  660,
+    "PAN":      660,
+    "PHONE":    520,
+    "UPI_ID":   520,
+    "EMAIL":    520,
+    "BANK_ACC": 660,
+    "IFSC":     660,
+    "ORG":      440,
+    "GPE":      440,
+    "LOC":      440,
+    "DEFAULT":  440,
+}
 
-    # 1. Initialize Modules
-    recorder = MicrophoneRecorder()
-    
-    print("1. Loading PII Filter...")
-    anonymizer = IndianPIIAnonymizer(use_gliner=True)
-    
-    print("2. Loading Speech Engine (Small Model)...")
-    transcriber = LocalTranscriber("small") 
 
-    print("\n✅ SOFTWARE SYSTEM READY.")
-    
-    while True:
-        try:
-            print("\n" + "-"*40)
-            cmd = input("Press ENTER to speak (or 'q' to quit): ")
-            if cmd.lower() == 'q':
+class PrivacyVoiceAssistant:
+
+    def __init__(self):
+        print("=" * 60)
+        print("  PRIVACY-PRESERVING VOICE ASSISTANT")
+        print("  Loading models...")
+        print("=" * 60)
+
+        print("\n1. Loading PII Filter (spaCy + Indian rules)...")
+        self.pii = PIIMask()
+
+        print("\n2. Loading Whisper (small)...")
+        self.transcriber = LocalTranscriber(model_size="small")
+
+        self.audio = pyaudio.PyAudio()
+        self.session_stats = {"total": 0, "redacted": 0, "pii_counts": {}}
+        print("\n  System ready.\n")
+
+    def _generate_beep(self, frequency, duration):
+        num_samples = int(SAMPLE_RATE * duration)
+        samples = []
+        fade = int(SAMPLE_RATE * 0.02)
+        for i in range(num_samples):
+            envelope = 1.0
+            if i < fade:
+                envelope = i / fade
+            elif i > num_samples - fade:
+                envelope = (num_samples - i) / fade
+            val = envelope * 0.6 * math.sin(2 * math.pi * frequency * i / SAMPLE_RATE)
+            samples.append(int(val * 32767))
+        return struct.pack(f"{num_samples}h", *samples)
+
+    def _record(self, seconds=RECORD_SECONDS):
+        stream = self.audio.open(
+            format=FORMAT, channels=CHANNELS,
+            rate=SAMPLE_RATE, input=True,
+            frames_per_buffer=CHUNK
+        )
+        frames = []
+        total_chunks = int(SAMPLE_RATE / CHUNK * seconds)
+        for i in range(total_chunks):
+            data = stream.read(CHUNK, exception_on_overflow=False)
+            frames.append(data)
+            filled = int(30 * i / total_chunks)
+            bar = "█" * filled + "░" * (30 - filled)
+            print(f"\r  [{bar}] Recording... {i * CHUNK // SAMPLE_RATE}s", end="", flush=True)
+        print()
+        stream.stop_stream()
+        stream.close()
+
+        tmp = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
+        with wave.open(tmp.name, "wb") as wf:
+            wf.setnchannels(CHANNELS)
+            wf.setsampwidth(self.audio.get_sample_size(FORMAT))
+            wf.setframerate(SAMPLE_RATE)
+            wf.writeframes(b"".join(frames))
+        return tmp.name
+
+    def _play_beep(self, span):
+        freq = BEEP_FREQUENCIES.get(span.label, BEEP_FREQUENCIES["DEFAULT"])
+        duration = max(BEEP_DURATION, len(span.text.split()) * 0.25)
+        beep_data = self._generate_beep(freq, duration)
+        stream = self.audio.open(
+            format=FORMAT, channels=CHANNELS,
+            rate=SAMPLE_RATE, output=True
+        )
+        stream.write(beep_data)
+        stream.stop_stream()
+        stream.close()
+
+    def _update_stats(self, spans):
+        self.session_stats["total"] += 1
+        if spans:
+            self.session_stats["redacted"] += 1
+        for span in spans:
+            self.session_stats["pii_counts"][span.label] = \
+                self.session_stats["pii_counts"].get(span.label, 0) + 1
+
+    def _print_session_stats(self):
+        print("\n" + "=" * 60)
+        print("  SESSION SUMMARY")
+        print("=" * 60)
+        print(f"  Total utterances : {self.session_stats['total']}")
+        print(f"  With PII blocked : {self.session_stats['redacted']}")
+        if self.session_stats["pii_counts"]:
+            print("  PII breakdown:")
+            for label, count in self.session_stats["pii_counts"].items():
+                print(f"    {label:<15}: {count}")
+        print("=" * 60)
+
+    def run(self):
+        print("Press ENTER to speak, 'q' + ENTER to quit.\n")
+        while True:
+            try:
+                cmd = input("  [ENTER to speak / q to quit] > ").strip().lower()
+            except (EOFError, KeyboardInterrupt):
                 break
 
-            # 2. Record Audio
-            filename = "command_buffer.wav"
-            recorder.start_stream()
-            recorder.record_audio(duration_seconds=RECORD_DURATION)
-            recorder.save_recording(filename)
-            recorder.stop_stream()
+            if cmd == "q":
+                break
 
-            # 3. Transcribe (Audio -> Text)
-            print("🧠 Transcribing audio...")
-            raw_text = transcriber.transcribe(filename)
-            
-            if not raw_text:
-                print("⚠ No speech detected.")
+            print("\n  Listening for 4 seconds — speak now...")
+            wav_path = self._record()
+
+            print("  Transcribing...")
+            # Word timestamps enabled — foundation for Stage 2 audio beep replacement
+            text, word_timestamps = self.transcriber.transcribe_with_timestamps(wav_path)
+            os.unlink(wav_path)
+
+            if not text:
+                print("  (Nothing heard)\n")
                 continue
-                
-            print(f"🗣  User said: '{raw_text}'")
 
-            # 4. Privacy Filter (Text -> Safe Text)
-            clean_result = anonymizer.anonymize_with_custom_operators(raw_text)
-            safe_text = clean_result['anonymized']
-            
-            print(f"🛡  Sanitized Log: {safe_text}")
-            
-            # Highlight redactions for demo
-            if clean_result['detected_entities']:
-                removed_items = [f"{e['entity_type']}: {e['text']}" for e in clean_result['detected_entities']]
-                print(f"   (Redacted: {', '.join(removed_items)})")
+            redacted, spans = self.pii.analyze(text)
 
-            # 5. Execute Logic (Mock Hardware Trigger)
-            # The hardware team will insert their code here later.
-            command_lower = raw_text.lower()
-            
-            if "light" in command_lower:
-                if "on" in command_lower:
-                    print("\n>>> HARDWARE TRIGGER: [LIGHT] -> [ON] <<<")
-                elif "off" in command_lower:
-                    print("\n>>> HARDWARE TRIGGER: [LIGHT] -> [OFF] <<<")
-            
-            elif "fan" in command_lower:
-                 if "on" in command_lower:
-                    print("\n>>> HARDWARE TRIGGER: [FAN] -> [ON] <<<")
-                 elif "off" in command_lower:
-                    print("\n>>> HARDWARE TRIGGER: [FAN] -> [OFF] <<<")
-            
+            print(f"\n  Heard:    {text}")
+            print(f"  Redacted: {redacted}")
+
+            if spans:
+                summary = self.pii.get_redaction_summary(spans)
+                print(f"  Blocked:  {summary}")
+                print(f"  [BEEP played for {len(spans)} PII item(s)]")
+
+                # Word-level timestamps show exactly which audio samples
+                # will be replaced with beep tone in Stage 2
+                LocalTranscriber.log_word_timestamps(word_timestamps, spans)
+
+                for span in spans:
+                    self._play_beep(span)
+                    time.sleep(0.05)
             else:
-                print("ℹ General Command (No hardware trigger)")
+                print("  [No PII detected]\n")
 
-            # Cleanup temp file
-            if os.path.exists(filename):
-                os.remove(filename)
+            self._update_stats(spans)
 
-        except KeyboardInterrupt:
-            print("\nStopping system...")
-            break
-        except Exception as e:
-            print(f"⚠ Unexpected System Error: {e}")
+        self._print_session_stats()
+        self.audio.terminate()
+
 
 if __name__ == "__main__":
-    main()
+    assistant = PrivacyVoiceAssistant()
+    assistant.run()
