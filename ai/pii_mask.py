@@ -22,11 +22,27 @@ class PIIMask:
         "AADHAAR": r"\b[2-9]{1}[0-9]{3}\s?[0-9]{4}\s?[0-9]{4}\b",
         "PAN":     r"\b[A-Z]{5}[0-9]{4}[A-Z]{1}\b",
         "UPI_ID":  r"\b[\w.\-]{2,256}@[a-zA-Z]{2,64}\b",
-        "PHONE":   r"\b(?:\+91|91|0)?[6-9][0-9]{9}\b",
+        "PHONE":   r"\b(?:\+91|91|0)?[5-9][0-9]{9}\b",
         "IFSC":    r"\b[A-Z]{4}0[A-Z0-9]{6}\b",
         "EMAIL":   r"\b[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}\b",
         "BANK_ACC":r"\b[0-9]{9,18}\b",
         "PINCODE": r"\b[1-9][0-9]{5}\b",
+    }
+
+    RULE_PRIORITY = {
+        "AADHAAR": 10,
+        "PAN":     10,
+        "PHONE":    9,
+        "UPI_ID":   9,
+        "EMAIL":    9,
+        "IFSC":     8,
+        "BANK_ACC": 5,
+        "PINCODE":  7,
+        "PERSON":   6,
+        "PER":      6,
+        "ORG":      4,
+        "GPE":      4,
+        "LOC":      4,
     }
 
     LABEL_MAP = {
@@ -66,10 +82,15 @@ class PIIMask:
         spans = []
         for label, pattern in self.INDIAN_PII_PATTERNS.items():
             for match in re.finditer(pattern, text):
-                # Avoid flagging short standalone numbers as bank accounts
                 if label == "BANK_ACC":
                     matched = match.group()
                     if len(matched) < 11:
+                        continue
+                    phone_pat = self.INDIAN_PII_PATTERNS["PHONE"]
+                    if re.fullmatch(phone_pat, matched):
+                        continue
+                if label == "AADHAAR":
+                    if match.start() > 0 and text[match.start() - 1] == "+":
                         continue
                 spans.append(RedactedSpan(
                     start=match.start(),
@@ -80,20 +101,37 @@ class PIIMask:
                 ))
         return spans
 
+    def _spacy_span_near_pii(self, text: str, ent) -> bool:
+        for label, pattern in self.INDIAN_PII_PATTERNS.items():
+            if label == "BANK_ACC":
+                continue
+            for m in re.finditer(pattern, text):
+                if (m.start() <= ent.end_char and m.end() >= ent.start_char):
+                    return True
+                if abs(m.start() - ent.end_char) <= 1:
+                    return True
+                if abs(m.end() - ent.start_char) <= 1:
+                    return True
+        return False
+
     def _spacy_spans(self, text: str) -> List[RedactedSpan]:
         if not self.nlp:
             return []
         doc = self.nlp(text)
         spans = []
         for ent in doc.ents:
-            if ent.label_ in self.LABEL_MAP:
-                spans.append(RedactedSpan(
-                    start=ent.start_char,
-                    end=ent.end_char,
-                    text=ent.text,
-                    label=ent.label_,
-                    confidence=0.85
-                ))
+            if ent.label_ not in self.LABEL_MAP:
+                continue
+            if ent.label_ in ("ORG", "GPE", "LOC"):
+                if self._spacy_span_near_pii(text, ent):
+                    continue
+            spans.append(RedactedSpan(
+                start=ent.start_char,
+                end=ent.end_char,
+                text=ent.text,
+                label=ent.label_,
+                confidence=0.85
+            ))
         return spans
 
     def _merge_spans(self, spans: List[RedactedSpan]) -> List[RedactedSpan]:
@@ -104,8 +142,9 @@ class PIIMask:
         for current in sorted_spans[1:]:
             prev = merged[-1]
             if current.start < prev.end:
-                # Overlap — keep the one with higher confidence, extend end
-                if current.confidence >= prev.confidence:
+                prio_current = self.RULE_PRIORITY.get(current.label, 0)
+                prio_prev = self.RULE_PRIORITY.get(prev.label, 0)
+                if prio_current > prio_prev or (prio_current == prio_prev and current.confidence >= prev.confidence):
                     merged[-1] = RedactedSpan(
                         start=prev.start,
                         end=max(prev.end, current.end),
