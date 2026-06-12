@@ -1,6 +1,7 @@
 import random
 import json
 import math
+import string
 
 random.seed(42)
 
@@ -653,9 +654,15 @@ def make_english_double(items):
     text = temp.format(pii=label_map1.get(i1[0], "PII"), pii_val=i1[1], pii2=label_map2.get(i2[0], "PII"), pii_val2=i2[1])
     return text
 
+_TEMPLATE_CACHE = {}
+
+def _get_template_keys(template):
+    if template not in _TEMPLATE_CACHE:
+        keys = [fn for _, fn, _, _ in string.Formatter().parse(template) if fn]
+        _TEMPLATE_CACHE[template] = keys
+    return _TEMPLATE_CACHE[template]
+
 def make_paragraph(items):
-    idx = random.randrange(len(MIXED_PARAGRAPHS))
-    template = MIXED_PARAGRAPHS[idx]
     mapped = {}
     for label, val in items:
         if label == "PERSON":
@@ -680,11 +687,18 @@ def make_paragraph(items):
             mapped["org"] = val
         elif label == "GPE":
             mapped["loc"] = val
-    try:
-        text = template.format(**mapped)
-        return text
-    except KeyError:
-        return template
+
+    T = MIXED_PARAGRAPHS
+    indices = list(range(len(T)))
+    random.shuffle(indices)
+    for idx in indices:
+        template = T[idx]
+        needed = _get_template_keys(template)
+        if all(k in mapped for k in needed):
+            return template.format(**mapped)
+
+    safe = " ".join(str(v) for v in mapped.values())
+    return safe if safe else "General conversation today."
 
 def generate_dataset(total=7000):
     samples = []
