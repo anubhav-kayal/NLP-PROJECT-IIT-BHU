@@ -1,5 +1,4 @@
 import struct
-import math
 import time
 import threading
 import numpy as np
@@ -14,73 +13,57 @@ SAMPLE_WIDTH = 2
 CHUNK = 1024
 WINDOW_SECONDS = 3
 HOP_SECONDS = 1.5
-BEEP_DURATION = 0.35
-
-BEEP_FREQUENCIES = {
-    "PERSON":   880,
-    "PER":      880,
-    "AADHAAR":  660,
-    "PAN":      660,
-    "PHONE":    520,
-    "UPI_ID":   520,
-    "EMAIL":    520,
-    "BANK_ACC": 660,
-    "IFSC":     660,
-    "ORG":      440,
-    "GPE":      440,
-    "LOC":      440,
-    "DEFAULT":  440,
-}
-
 class AudioRedactor:
     def __init__(self, sample_rate=SAMPLE_RATE):
         self.sample_rate = sample_rate
+        self._rng = np.random.default_rng(42)
 
-    def generate_beep(self, frequency, duration, fade_ms=20):
-        num_samples = int(self.sample_rate * duration)
-        fade = int(self.sample_rate * fade_ms / 1000)
-        samples = np.zeros(num_samples, dtype=np.float64)
-        for i in range(num_samples):
-            envelope = 1.0
-            if i < fade:
-                envelope = i / fade
-            elif i > num_samples - fade:
-                envelope = (num_samples - i) / fade
-            val = envelope * 0.6 * math.sin(2 * math.pi * frequency * i / self.sample_rate)
-            samples[i] = val
-        return samples
+    def _noise(self, num_samples, rms_target, fade_samples):
+        noise = self._rng.normal(0, 1, num_samples).astype(np.float64)
+        current_rms = np.sqrt(np.mean(noise ** 2))
+        if current_rms > 0:
+            noise *= rms_target / current_rms
+        fade = min(fade_samples, num_samples // 2)
+        if fade > 0:
+            noise[:fade] *= np.linspace(0, 1, fade)
+            noise[-fade:] *= np.linspace(1, 0, fade)
+        return noise
 
-    def redact_audio(self, audio_buffer, word_timestamps, pii_spans):
-        redacted = audio_buffer.copy().astype(np.float64)
-        pii_word_set = set()
+    def _span_word_set(self, pii_spans):
+        spans_by_word = {}
         for span in pii_spans:
             for w in span.text.split():
-                pii_word_set.add(w.lower().strip(".,!?"))
+                key = w.lower().strip(".,!?'\"")
+                if key:
+                    spans_by_word[key] = span
+        return spans_by_word
+
+    def redact_audio(self, audio_buffer, word_timestamps, pii_spans):
+        signal = audio_buffer.astype(np.float64) if not isinstance(audio_buffer, np.ndarray) else audio_buffer.astype(np.float64)
+        if np.max(np.abs(signal)) > 1.0:
+            signal = signal / 32768.0
+        redacted = signal.copy()
+        span_map = self._span_word_set(pii_spans)
 
         for w in word_timestamps:
             clean = w["word"].lower().strip(".,!?'\"")
-            if clean not in pii_word_set:
+            if clean not in span_map:
                 continue
-            label = self._find_label_for_word(w["word"], pii_spans)
-            freq = BEEP_FREQUENCIES.get(label, BEEP_FREQUENCIES["DEFAULT"])
-            start_sample = int(w["start"] * self.sample_rate)
-            end_sample = int(w["end"] * self.sample_rate)
-            if end_sample > len(redacted):
-                end_sample = len(redacted)
-            duration = (end_sample - start_sample) / self.sample_rate
-            beep = self.generate_beep(freq, duration)
-            beep = beep[:end_sample - start_sample]
-            redacted[start_sample:end_sample] = beep
+            span = span_map[clean]
+            ss = int(round(w["start"] * self.sample_rate))
+            se = int(round(w["end"] * self.sample_rate))
+            se = min(se, len(redacted))
 
+            segment = redacted[ss:se]
+            rms = max(np.sqrt(np.mean(segment ** 2)), 1e-6)
+            dur = (se - ss) / self.sample_rate
+            n = self._noise(se - ss, rms, max(64, int(0.004 * self.sample_rate)))[:se - ss]
+            redacted[ss:se] = n
+
+        max_val = np.max(np.abs(redacted))
+        if max_val > 1.0:
+            redacted = redacted / max_val * 0.99
         return (redacted * 32767).astype(np.int16)
-
-    def _find_label_for_word(self, word, pii_spans):
-        w_lower = word.lower().strip(".,!?")
-        for span in pii_spans:
-            for part in span.text.split():
-                if part.lower().strip(".,!?") == w_lower:
-                    return span.label
-        return "DEFAULT"
 
 
 class RollingBuffer:
