@@ -19,7 +19,7 @@ class PIIMask:
     """
 
     INDIAN_PII_PATTERNS = {
-        "AADHAAR": r"\b[2-9]{1}[0-9]{3}\s?[0-9]{4}\s?[0-9]{4}\b",
+        "AADHAAR": r"\b[2-9][0-9]{3}\s?[0-9]{4}\s?[0-9]{4}\b",
         "PAN":     r"\b[A-Z]{5}[0-9]{4}[A-Z]{1}\b",
         "UPI_ID":  r"\b[\w.\-]{2,256}@[a-zA-Z]{2,64}\b",
         "PHONE":   r"\b(?:\+91|91|0)?[5-9][0-9]{9}\b",
@@ -27,6 +27,12 @@ class PIIMask:
         "EMAIL":   r"\b[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}\b",
         "BANK_ACC":r"\b[0-9]{9,18}\b",
         "PINCODE": r"\b[1-9][0-9]{5}\b",
+    }
+
+    INDIAN_PII_PATTERNS_HINDI = {
+        "AADHAAR": r"(?<!\d)[२-९][०-९]{3}\s?[०-९]{4}\s?[०-९]{4}(?!\d)",
+        "PHONE":   r"(?<!\d)(?:\+९१|९१|०)?[५-९][०-९]{9}(?!\d)",
+        "PINCODE": r"(?<!\d)[१-९][०-९]{5}(?!\d)",
     }
 
     INDIAN_FIRST_NAMES = {
@@ -75,6 +81,79 @@ class PIIMask:
         "Jalandhar","Mohali","Panchkula","Faridabad","Ghaziabad",
     }
 
+    HINDI_FIRST_NAMES = {
+        "अमित","अंजलि","अर्जुन","आदिति","आरव","ईशान","कविता","किरण",
+        "कृष्णा","गणेश","गीता","गौरव","ज्योति","तरुण","तान्या","दीपक",
+        "दिव्या","ध्रुव","नवीन","निखिल","निशा","नीता","नीलम","पंकज",
+        "पल्लवी","प्रकाश","पूजा","प्रिया","फातिमा","बाला","मनोज",
+        "मनीष","मोहम्मद","यश","रजनीश","रमेश","रवि","राजेश","राधा",
+        "राम","रितु","रीना","लता","लक्ष्मी","विजय","विनय","विवेक",
+        "विकास","शर्मिला","शशि","शिवानी","शीला","श्वेता","सरिता",
+        "सविता","सागर","सान्या","सिमरन","सुनीता","सुरेश","सुमन",
+        "स्वाति","हेमंत","हर्ष","रोहित","आकाश","अनुभव","गोपाल",
+        "किशोर","दिनेश","नरेश","पंकज","संजय","विनोद","मुकेश",
+        "सुनील","कमला","उषा","आशा","रेखा","सीमा","गीता","नेहा",
+    }
+
+    HINDI_LAST_NAMES = {
+        "अग्रवाल","अली","अंसारी","आचार्य","उपाध्याय","कपूर","कुमार",
+        "कौर","खत्री","खान","गांधी","गोस्वामी","गुप्ता","चंद्रशेखर",
+        "चतुर्वेदी","चौहान","चोपड़ा","जैन","जोशी","ठाकुर","तिवारी",
+        "त्रिपाठी","दास","दुबे","देशमुख","देसाई","नायर","निगम",
+        "पंडित","पटेल","पांडे","पिल्लई","प्रधान","बाजाज",
+        "बिष्ट","भंडारी","भट्ट","महापात्र","मिश्रा","मुखर्जी","मेनन",
+        "मेहता","यादव","रावत","राघवन","रेड्डी","लाल","वर्मा","वशिष्ठ",
+        "विक्रम","विश्वकर्मा","व्यास","शर्मा","शुक्ला","श्रीवास्तव",
+        "सक्सेना","सिंह","स्वामी",
+    }
+
+    CASTE_RELIGION_TERMS = {
+        "BRAHMIN","BRAHMAN","THAKUR","RAJPUT","JAT","GURJAR","MARATHA",
+        "KUNBI","PATIDAR","PATEL","YADAV","KURMI","KOERI","SHARMA",
+        "MISHRA","DUBEY","TIWARI","CHAUDHARY","KHATRI","ARORA","BANIYA",
+        "VAISHYA","GUPTA","AGARWAL","JAIN","KAYASTHA","BHUMIHAR","TYAGI",
+        "SAINI","KASHYAP","MAURYA","PRAJAPATI","NISHAD","BHAT",
+        "MUSLIM","HINDU","SIKH","CHRISTIAN","JAIN","BUDDHIST","PARSI",
+        "ISLAM","ISLAMIC","DHARMIC","ATHEIST","SPIRITUAL",
+        "OBC","SC","ST","GENERAL","EWS","CREAMY","NON-CREAMY",
+        "DALIT","ADIVASI","TRIBE","FORWARD","BACKWARD","MINORITY",
+        "UPPER CASTE","LOWER CASTE","RESERVED","UNRESERVED",
+        "हिंदू","मुसलमान","सिख","ईसाई","बौद्ध","जैन","यादव",
+        "ठाकुर","जाट","गुर्जर","मराठा","कुर्मी","कोइरी","चौधरी",
+        "अग्रवाल","बनिया","दलित","आदिवासी","पिछड़ा","सामान्य",
+    }
+
+    MEDICAL_TERMS = {
+        "DIABETES","HYPERTENSION","BLOOD PRESSURE","BP","SUGAR",
+        "THYROID","ASTHMA","CANCER","TUMOUR","TUMOR","HEART DISEASE",
+        "KIDNEY FAILURE","LIVER CIRRHOSIS","HEPATITIS","TUBERCULOSIS",
+        "TB","MALARIA","DENGUE","CHIKUNGUNYA","TYPHOID","CHOLERA",
+        "ANAEMIA","ANEMIA","ARTHRITIS","OSTEOPOROSIS","MIGRAINE",
+        "EPILEPSY","PARKINSON","ALZHEIMER","DEMENTIA","STROKE",
+        "INFARCTION","ATTACK","COVID","CORONA","HIV","AIDS",
+        "ULCER","GASTRITIS","ACIDITY","INDIGESTION","CONSTIPATION",
+        "PNEUMONIA","BRONCHITIS","SINUSITIS","ALLERGY","ECZEMA",
+        "PSORIASIS","DERMATITIS","GLAUCOMA","CATARACT","RETINOPATHY",
+        "DEPRESSION","ANXIETY","BIPOLAR","SCHIZOPHRENIA","INSOMNIA",
+        "FRACTURE","SPRAIN","DISLOCATION","BURN","WOUND","INFECTION",
+        "INSULIN","METFORMIN","ASPIRIN","PARACETAMOL","IBUPROFEN",
+        "ANTIBIOTIC","ANTIDEPRESSANT","ANTIHISTAMINE","VACCINE",
+        "CHEMOTHERAPY","RADIATION","SURGERY","TRANSPLANT","DIALYSIS",
+        "BLOOD TEST","URINE TEST","X-RAY","MRI","CT SCAN","ECG",
+        "EEG","SONOGRAPHY","ULTRASOUND","MAMMOGRAPHY","BIOPSY",
+        "PATHOLOGY","RADIOLOGY","CARDIOLOGY","NEUROLOGY","ONCOLOGY",
+        "ORTHOPAEDICS","PAEDIATRICS","GYNAECOLOGY","DERMATOLOGY",
+        "MEDICAL RECORD","MRN","IPD NO","OPD NO","BED NO","WARD NO",
+        "INSURANCE NO","POLICY NO","CLAIM NO","HEALTH CARD",
+        "डायबिटीज","मधुमेह","हाइपरटेंशन","बीपी","थायराइड",
+        "अस्थमा","दमा","कैंसर","टीबी","तपेदिक","मलेरिया",
+        "डेंगू","टाइफाइड","हैजा","निमोनिया","बुखार","खांसी",
+        "जुकाम","सिरदर्द","बदन दर्द","दस्त","उल्टी","एलर्जी",
+        "ऑपरेशन","सर्जरी","इलाज","दवाई","गोली","इंजेक्शन",
+        "मरीज","रोगी","अस्पताल","क्लिनिक","डॉक्टर","डॉ.",
+        "ब्लड टेस्ट","एक्स-रे","अल्ट्रासाउंड","ईसीजी","एमआरआई",
+    }
+
     ORG_FP_KEYWORDS = {
         "PAN","Aadhaar","ITR","IFSC","UPI","KYC","NEFT","RTGS","IMPS",
         "OTP","GST","TDS","TAN","DIN","CIN","LLP","HUF","NRI","FEMA",
@@ -89,29 +168,33 @@ class PIIMask:
         "PHONE":    9,
         "UPI_ID":   8,
         "IFSC":     8,
+        "MEDICAL":  7,
         "PINCODE":  7,
         "PERSON":   6,
         "PER":      6,
         "BANK_ACC": 5,
+        "CASTE_RELIGION": 5,
         "ORG":      4,
         "GPE":      4,
         "LOC":      4,
     }
 
     LABEL_MAP = {
-        "PERSON":   "NAME_REDACTED",
-        "PER":      "NAME_REDACTED",
-        "ORG":      "ORG_REDACTED",
-        "GPE":      "LOCATION_REDACTED",
-        "LOC":      "LOCATION_REDACTED",
-        "AADHAAR":  "AADHAAR_REDACTED",
-        "PAN":      "PAN_REDACTED",
-        "UPI_ID":   "UPI_REDACTED",
-        "PHONE":    "PHONE_REDACTED",
-        "IFSC":     "IFSC_REDACTED",
-        "EMAIL":    "EMAIL_REDACTED",
-        "BANK_ACC": "BANK_REDACTED",
-        "PINCODE":  "PINCODE_REDACTED",
+        "PERSON":         "NAME_REDACTED",
+        "PER":            "NAME_REDACTED",
+        "ORG":            "ORG_REDACTED",
+        "GPE":            "LOCATION_REDACTED",
+        "LOC":            "LOCATION_REDACTED",
+        "AADHAAR":        "AADHAAR_REDACTED",
+        "PAN":            "PAN_REDACTED",
+        "UPI_ID":         "UPI_REDACTED",
+        "PHONE":          "PHONE_REDACTED",
+        "IFSC":           "IFSC_REDACTED",
+        "EMAIL":          "EMAIL_REDACTED",
+        "BANK_ACC":       "BANK_REDACTED",
+        "PINCODE":        "PINCODE_REDACTED",
+        "CASTE_RELIGION": "CASTE_RELIGION_REDACTED",
+        "MEDICAL":        "MEDICAL_REDACTED",
     }
 
     CONFIDENCE_THRESHOLD = 0.75
@@ -135,24 +218,32 @@ class PIIMask:
         spans = []
         for label, pattern in self.INDIAN_PII_PATTERNS.items():
             for match in re.finditer(pattern, text):
-                if label == "BANK_ACC":
-                    matched = match.group()
-                    if len(matched) < 11:
-                        continue
-                    phone_pat = self.INDIAN_PII_PATTERNS["PHONE"]
-                    if re.fullmatch(phone_pat, matched):
-                        continue
-                if label == "AADHAAR":
-                    if match.start() > 0 and text[match.start() - 1] == "+":
-                        continue
+                if self._skip_rule_match(text, match, label):
+                    continue
                 spans.append(RedactedSpan(
-                    start=match.start(),
-                    end=match.end(),
-                    text=match.group(),
-                    label=label,
-                    confidence=1.0
+                    start=match.start(), end=match.end(),
+                    text=match.group(), label=label, confidence=1.0
+                ))
+        for label, pattern in self.INDIAN_PII_PATTERNS_HINDI.items():
+            for match in re.finditer(pattern, text):
+                spans.append(RedactedSpan(
+                    start=match.start(), end=match.end(),
+                    text=match.group(), label=label, confidence=1.0
                 ))
         return spans
+
+    def _skip_rule_match(self, text, match, label):
+        if label == "BANK_ACC":
+            matched = match.group()
+            if len(matched) < 11:
+                return True
+            phone_pat = self.INDIAN_PII_PATTERNS["PHONE"]
+            if re.fullmatch(phone_pat, matched):
+                return True
+        if label == "AADHAAR":
+            if match.start() > 0 and text[match.start() - 1] == "+":
+                return True
+        return False
 
     def _dictionary_spans(self, text: str) -> List[RedactedSpan]:
         spans = []
@@ -165,46 +256,54 @@ class PIIMask:
                 raw_positions.append((t, pos, pos + len(t)))
             pos += len(t)
 
+        city_lower = {c.lower() for c in self.INDIAN_CITIES}
+        caste_lower = {c.lower() for c in self.CASTE_RELIGION_TERMS}
+        medical_lower = {m.lower() for m in self.MEDICAL_TERMS}
+
+        all_first = list(self.INDIAN_FIRST_NAMES) + list(self.HINDI_FIRST_NAMES)
+        all_last = list(self.INDIAN_LAST_NAMES) + list(self.HINDI_LAST_NAMES)
+        all_first_lower = {n.lower() for n in all_first}
+        all_last_lower = {n.lower() for n in all_last}
+
         idx = 0
         while idx < len(tokens):
             tok = tokens[idx]
             t_start, t_end = raw_positions[idx][1], raw_positions[idx][2]
-            lower = tok.strip(".,!?").lower()
+            clean = tok.strip(".,!?")
+            lower = clean.lower()
 
-            first_name_match = None
-            for name in self.INDIAN_FIRST_NAMES:
-                if tok.strip(".,!?").lower() == name.lower():
-                    first_name_match = name
-                    break
+            is_first = lower in all_first_lower
 
-            if first_name_match and idx + 1 < len(tokens):
+            if is_first and idx + 1 < len(tokens):
                 next_tok = tokens[idx + 1]
                 n_start, n_end = raw_positions[idx + 1][1], raw_positions[idx + 1][2]
-                next_clean = next_tok.strip(".,!?").lower()
-                for lname in self.INDIAN_LAST_NAMES:
-                    if next_clean == lname.lower():
-                        span_text = text[t_start:n_end]
-                        spans.append(RedactedSpan(
-                            start=t_start, end=n_end,
-                            text=span_text, label="PERSON", confidence=0.9
-                        ))
-                        idx += 1
-                        break
+                nclean = next_tok.strip(".,!?")
+                if nclean.lower() in all_last_lower:
+                    spans.append(RedactedSpan(
+                        start=t_start, end=n_end,
+                        text=text[t_start:n_end], label="PERSON", confidence=0.9
+                    ))
+                    idx += 1
                 else:
                     spans.append(RedactedSpan(
                         start=t_start, end=t_end,
                         text=tok, label="PERSON", confidence=0.85
                     ))
-            elif first_name_match:
+            elif is_first:
                 spans.append(RedactedSpan(
-                    start=t_start, end=t_end,
-                    text=tok, label="PERSON", confidence=0.85
+                    start=t_start, end=t_end, text=tok, label="PERSON", confidence=0.85
                 ))
-
-            elif tok.strip(".,!?").lower() in {c.lower() for c in self.INDIAN_CITIES}:
+            elif lower in city_lower:
                 spans.append(RedactedSpan(
-                    start=t_start, end=t_end,
-                    text=tok, label="GPE", confidence=0.85
+                    start=t_start, end=t_end, text=tok, label="GPE", confidence=0.85
+                ))
+            elif lower in caste_lower:
+                spans.append(RedactedSpan(
+                    start=t_start, end=t_end, text=tok, label="CASTE_RELIGION", confidence=0.85
+                ))
+            elif lower in medical_lower:
+                spans.append(RedactedSpan(
+                    start=t_start, end=t_end, text=tok, label="MEDICAL", confidence=0.85
                 ))
 
             idx += 1
