@@ -8,6 +8,7 @@ import time
 import pyaudio
 from pii_mask import PIIMask
 from transcriber import LocalTranscriber
+from streaming_pipeline import StreamingPipeline
 
 SAMPLE_RATE    = 16000
 CHANNELS       = 1
@@ -33,11 +34,11 @@ BEEP_FREQUENCIES = {
 }
 
 
-class PrivacyVoiceAssistant:
+class FixedRecordAssistant:
 
     def __init__(self):
         print("=" * 60)
-        print("  PRIVACY-PRESERVING VOICE ASSISTANT")
+        print("  PRIVACY-PRESERVING VOICE ASSISTANT (Fixed-Record Mode)")
         print("  Loading models...")
         print("=" * 60)
 
@@ -138,7 +139,6 @@ class PrivacyVoiceAssistant:
             wav_path = self._record()
 
             print("  Transcribing...")
-            # Word timestamps enabled — foundation for Stage 2 audio beep replacement
             text, word_timestamps = self.transcriber.transcribe_with_timestamps(wav_path)
             os.unlink(wav_path)
 
@@ -155,9 +155,6 @@ class PrivacyVoiceAssistant:
                 summary = self.pii.get_redaction_summary(spans)
                 print(f"  Blocked:  {summary}")
                 print(f"  [BEEP played for {len(spans)} PII item(s)]")
-
-                # Word-level timestamps show exactly which audio samples
-                # will be replaced with beep tone in Stage 2
                 LocalTranscriber.log_word_timestamps(word_timestamps, spans)
 
                 for span in spans:
@@ -173,5 +170,22 @@ class PrivacyVoiceAssistant:
 
 
 if __name__ == "__main__":
-    assistant = PrivacyVoiceAssistant()
-    assistant.run()
+    import argparse
+    parser = argparse.ArgumentParser(description="Privacy-Preserving Voice Assistant")
+    parser.add_argument("--fixed", action="store_true",
+                        help="Use fixed 4-second recording mode (legacy)")
+    parser.add_argument("--blackhole", action="store_true",
+                        help="Route streaming output to BlackHole virtual microphone")
+    parser.add_argument("--blackhole-device", type=int, default=None,
+                        help="BlackHole device index")
+    args = parser.parse_args()
+
+    if args.fixed:
+        assistant = FixedRecordAssistant()
+        assistant.run()
+    else:
+        pipeline = StreamingPipeline(
+            use_blackhole=args.blackhole,
+            blackhole_device_id=args.blackhole_device,
+        )
+        pipeline.run()
