@@ -29,6 +29,59 @@ class PIIMask:
         "PINCODE": r"\b[1-9][0-9]{5}\b",
     }
 
+    INDIAN_FIRST_NAMES = {
+        "Vikash","Rahul","Priya","Anubhav","Deepak","Sunita","Rajesh","Pooja",
+        "Amit","Neha","Sanjay","Kavita","Arjun","Meera","Rohit","Anjali",
+        "Vivek","Smita","Suresh","Geeta","Mahesh","Rekha","Naresh","Savita",
+        "Ramesh","Usha","Dinesh","Lata","Pankaj","Nisha","Vinay","Asha",
+        "Mohammad","Fatima","Abdul","Zoya","Imran","Gurpreet","Harpreet",
+        "Manpreet","Jaspreet","Simran","Venkatesh","Lakshmi","Krishnamurthy",
+        "Padmavathi","Ravi","Subramanian","Anand","Srinivasan","Bharathi",
+        "Ganesh","Aditi","Ishaan","Aarav","Sanya","Armaan","Kritika","Harsh",
+        "Tanya","Nikhil","Shreya","Akash","Swati","Manoj","Divya","Prakash",
+        "Kiran","Naveen","Sudha","Vijay","Lalita","Aman","Ritu","Tarun",
+        "Jyoti","Hemant","Pallavi","Gaurav","Shweta","Dhruv",
+    }
+
+    INDIAN_LAST_NAMES = {
+        "Sharma","Verma","Gupta","Singh","Kumar","Das","Patel","Reddy",
+        "Nair","Menon","Iyer","Deshmukh","Joshi","Kulkarni","Desai","Pandey",
+        "Mishra","Tiwari","Dubey","Chaturvedi","Saxena","Srivastava","Agarwal",
+        "Jain","Mehta","Shah","Kapoor","Malhotra","Chopra","Bhatia","Arora",
+        "Sood","Bajaj","Kohli","Choudhary","Khatri","Thakur","Chauhan",
+        "Yadav","Maurya","Shukla","Tripathi","Pandit","Rawat","Negi","Bisht",
+        "Rana","Bhandari","Pradhan","Mahapatra","Swain","Naidu","Pillai",
+        "Mohan","Chandrasekhar","Subramaniam","Raghavan","Venkatesan",
+    }
+
+    INDIAN_CITIES = {
+        "Mumbai","Delhi","Bangalore","Hyderabad","Chennai","Kolkata","Pune",
+        "Ahmedabad","Jaipur","Lucknow","Varanasi","Patna","Bhopal","Indore",
+        "Chandigarh","Amritsar","Nagpur","Surat","Thane","Allahabad","Ranchi",
+        "Guwahati","Coimbatore","Kochi","Thiruvananthapuram","Bhubaneswar",
+        "Jodhpur","Udaipur","Goa","Shimla","Dehradun","Agra","Mathura",
+        "Gaya","Haridwar","Rishikesh","Ayodhya","Meerut","Gurgaon","Noida",
+        "Mysore","Mangalore","Vadodara","Rajkot","Jamnagar","Raipur",
+        "Jabalpur","Ujjain","Nashik","Aurangabad","Solapur","Kolhapur",
+        "Amravati","Srinagar","Jammu","Leh","Panaji","Margao","Pondicherry",
+        "Tiruchirappalli","Madurai","Salem","Tirunelveli","Hubli","Belgaum",
+        "Mangaluru","Shivamogga","Vijayawada","Visakhapatnam","Guntur",
+        "Kurnool","Warangal","Kakinada","Rajahmundry","Thrissur","Kozhikode",
+        "Kannur","Alappuzha","Kollam","Siliguri","Asansol","Durgapur",
+        "Bardhaman","Howrah","Bhilai","Bilaspur","Korba","Raigarh",
+        "Jamshedpur","Dhanbad","Bokaro","Deoghar","Jhansi","Agra","Aligarh",
+        "Gorakhpur","Moradabad","Saharanpur","Muzaffarnagar","Kota","Bikaner",
+        "Ajmer","Bhilwara","Udaipur","Bathinda","Patiala","Ludhiana",
+        "Jalandhar","Mohali","Panchkula","Faridabad","Ghaziabad",
+    }
+
+    ORG_FP_KEYWORDS = {
+        "PAN","Aadhaar","ITR","IFSC","UPI","KYC","NEFT","RTGS","IMPS",
+        "OTP","GST","TDS","TAN","DIN","CIN","LLP","HUF","NRI","FEMA",
+        "RBI","SEBI","IRDAI","EPFO","ESIC","PF","EPS","NPS","PPF",
+        "FD","RD","SIP","SWP","STP","AML","CAGR",
+    }
+
     RULE_PRIORITY = {
         "AADHAAR": 10,
         "PAN":     10,
@@ -101,6 +154,63 @@ class PIIMask:
                 ))
         return spans
 
+    def _dictionary_spans(self, text: str) -> List[RedactedSpan]:
+        spans = []
+        words = re.split(r"(\s+|[.,!?;:'\"()\[\]{}])", text)
+        tokens = [t for t in words if t.strip()]
+        raw_positions = []
+        pos = 0
+        for t in words:
+            if t.strip():
+                raw_positions.append((t, pos, pos + len(t)))
+            pos += len(t)
+
+        idx = 0
+        while idx < len(tokens):
+            tok = tokens[idx]
+            t_start, t_end = raw_positions[idx][1], raw_positions[idx][2]
+            lower = tok.strip(".,!?").lower()
+
+            first_name_match = None
+            for name in self.INDIAN_FIRST_NAMES:
+                if tok.strip(".,!?").lower() == name.lower():
+                    first_name_match = name
+                    break
+
+            if first_name_match and idx + 1 < len(tokens):
+                next_tok = tokens[idx + 1]
+                n_start, n_end = raw_positions[idx + 1][1], raw_positions[idx + 1][2]
+                next_clean = next_tok.strip(".,!?").lower()
+                for lname in self.INDIAN_LAST_NAMES:
+                    if next_clean == lname.lower():
+                        span_text = text[t_start:n_end]
+                        spans.append(RedactedSpan(
+                            start=t_start, end=n_end,
+                            text=span_text, label="PERSON", confidence=0.9
+                        ))
+                        idx += 1
+                        break
+                else:
+                    spans.append(RedactedSpan(
+                        start=t_start, end=t_end,
+                        text=tok, label="PERSON", confidence=0.85
+                    ))
+            elif first_name_match:
+                spans.append(RedactedSpan(
+                    start=t_start, end=t_end,
+                    text=tok, label="PERSON", confidence=0.85
+                ))
+
+            elif tok.strip(".,!?").lower() in {c.lower() for c in self.INDIAN_CITIES}:
+                spans.append(RedactedSpan(
+                    start=t_start, end=t_end,
+                    text=tok, label="GPE", confidence=0.85
+                ))
+
+            idx += 1
+
+        return spans
+
     def _spacy_span_near_pii(self, text: str, ent) -> bool:
         for label, pattern in self.INDIAN_PII_PATTERNS.items():
             if label == "BANK_ACC":
@@ -124,6 +234,8 @@ class PIIMask:
                 continue
             if ent.label_ in ("ORG", "GPE", "LOC"):
                 if self._spacy_span_near_pii(text, ent):
+                    continue
+                if ent.label_ == "ORG" and ent.text.strip() in self.ORG_FP_KEYWORDS:
                     continue
             spans.append(RedactedSpan(
                 start=ent.start_char,
@@ -160,7 +272,7 @@ class PIIMask:
         """
         Returns (redacted_text, list_of_detected_spans)
         """
-        all_spans = self._rule_based_spans(text) + self._spacy_spans(text)
+        all_spans = self._rule_based_spans(text) + self._dictionary_spans(text) + self._spacy_spans(text)
         all_spans = [s for s in all_spans if s.confidence >= self.CONFIDENCE_THRESHOLD]
         merged = self._merge_spans(all_spans)
 
