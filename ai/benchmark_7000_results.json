@@ -1,0 +1,134 @@
+{
+  "dataset": {
+    "size": 7000
+  },
+  "overall": {
+    "avg_inference_ms": 2.22,
+    "precision": 0.9511,
+    "recall": 0.9457,
+    "f1": 0.9484,
+    "true_positives": 8356,
+    "false_positives": 430,
+    "false_negatives": 480
+  },
+  "per_category": {
+    "BANK_ACC": {
+      "precision": 1.0,
+      "recall": 0.7336,
+      "f1": 0.8463,
+      "samples": 687,
+      "tp": 504,
+      "fp": 0,
+      "fn": 183
+    },
+    "PAN": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "samples": 963,
+      "tp": 963,
+      "fp": 0,
+      "fn": 0
+    },
+    "ORG": {
+      "precision": 0.8513,
+      "recall": 0.8065,
+      "f1": 0.8282,
+      "samples": 589,
+      "tp": 475,
+      "fp": 83,
+      "fn": 114
+    },
+    "PHONE": {
+      "precision": 0.993,
+      "recall": 1.0,
+      "f1": 0.9965,
+      "samples": 992,
+      "tp": 992,
+      "fp": 7,
+      "fn": 0
+    },
+    "EMAIL": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "samples": 749,
+      "tp": 749,
+      "fp": 0,
+      "fn": 0
+    },
+    "IFSC": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "samples": 712,
+      "tp": 712,
+      "fp": 0,
+      "fn": 0
+    },
+    "AADHAAR": {
+      "precision": 0.9156,
+      "recall": 0.9793,
+      "f1": 0.9464,
+      "samples": 919,
+      "tp": 900,
+      "fp": 83,
+      "fn": 19
+    },
+    "UPI_ID": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "samples": 888,
+      "tp": 888,
+      "fp": 0,
+      "fn": 0
+    },
+    "PERSON": {
+      "precision": 0.9142,
+      "recall": 0.8841,
+      "f1": 0.8989,
+      "samples": 1242,
+      "tp": 1098,
+      "fp": 103,
+      "fn": 144
+    },
+    "GPE": {
+      "precision": 0.8593,
+      "recall": 0.9629,
+      "f1": 0.9081,
+      "samples": 539,
+      "tp": 519,
+      "fp": 85,
+      "fn": 20
+    },
+    "PINCODE": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "samples": 556,
+      "tp": 556,
+      "fp": 0,
+      "fn": 0
+    },
+    "CASTE_RELIGION": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "samples": 0,
+      "tp": 0,
+      "fp": 61,
+      "fn": 0
+    },
+    "LOC": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "samples": 0,
+      "tp": 0,
+      "fp": 8,
+      "fn": 0
+    }
+  },
+  "error_count": 672
+}
