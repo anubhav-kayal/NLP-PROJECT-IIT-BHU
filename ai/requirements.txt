@@ -1,6 +1,6 @@
-
 openai-whisper
 pyaudio
 spacy
 numpy
+pyannote.audio
  

@@ -5,6 +5,7 @@ import numpy as np
 import pyaudio
 from pii_mask import PIIMask
 from transcriber import LocalTranscriber
+from diarization import SpeakerDiarizer, WordSpeaker
 
 SAMPLE_RATE = 16000
 CHANNELS = 1
@@ -115,6 +116,9 @@ class StreamingPipeline:
         print("\n2. Loading Whisper (small)...")
         self.transcriber = LocalTranscriber(model_size="small")
 
+        print("\n3. Loading Speaker Diarizer...")
+        self.diarizer = SpeakerDiarizer()
+
         self.audio = pyaudio.PyAudio()
         self.buffer = RollingBuffer()
         self.redactor = AudioRedactor()
@@ -148,6 +152,19 @@ class StreamingPipeline:
             data = self.input_stream.read(CHUNK, exception_on_overflow=False)
             self.buffer.write(data)
 
+    def _format_speaker_output(self, words_with_speakers):
+        if not words_with_speakers:
+            return ""
+        current_speaker = None
+        parts = []
+        for ws in words_with_speakers:
+            if ws.speaker != current_speaker:
+                current_speaker = ws.speaker
+                short = ws.speaker.replace("SPEAKER_", "S")
+                parts.append(f"[{short}]")
+            parts.append(ws.word)
+        return " ".join(parts)
+
     def _process_window(self, audio_samples):
         if audio_samples is None or len(audio_samples) == 0:
             return None
@@ -165,6 +182,12 @@ class StreamingPipeline:
         tmp_path = tmp.name
 
         text, word_timestamps = self.transcriber.transcribe_with_timestamps(tmp_path)
+
+        speaker_segments = self.diarizer.diarize(tmp_path)
+        words_with_speakers = self.diarizer.assign_words_to_speakers(
+            word_timestamps, speaker_segments
+        )
+
         os.unlink(tmp_path)
 
         if not text:
@@ -185,6 +208,7 @@ class StreamingPipeline:
             "spans": spans,
             "redacted_audio": redacted_audio,
             "word_timestamps": word_timestamps,
+            "words_with_speakers": words_with_speakers,
         }
 
     def _open_output_stream(self):
@@ -248,8 +272,11 @@ class StreamingPipeline:
                 redacted = result["redacted_text"]
                 spans = result["spans"]
                 redacted_audio = result["redacted_audio"]
+                words_with_speakers = result.get("words_with_speakers", [])
 
+                speaker_text = self._format_speaker_output(words_with_speakers)
                 print(f"\n  Heard:    {text[:100]}")
+                print(f"  Speakers: {speaker_text[:100]}")
                 print(f"  Redacted: {redacted[:100]}")
 
                 if spans:

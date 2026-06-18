@@ -9,6 +9,7 @@ import pyaudio
 from pii_mask import PIIMask
 from transcriber import LocalTranscriber
 from streaming_pipeline import StreamingPipeline
+from diarization import SpeakerDiarizer
 
 SAMPLE_RATE    = 16000
 CHANNELS       = 1
@@ -47,6 +48,9 @@ class FixedRecordAssistant:
 
         print("\n2. Loading Whisper (small)...")
         self.transcriber = LocalTranscriber(model_size="small")
+
+        print("\n3. Loading Speaker Diarizer...")
+        self.diarizer = SpeakerDiarizer()
 
         self.audio = pyaudio.PyAudio()
         self.session_stats = {"total": 0, "redacted": 0, "pii_counts": {}}
@@ -140,6 +144,13 @@ class FixedRecordAssistant:
 
             print("  Transcribing...")
             text, word_timestamps = self.transcriber.transcribe_with_timestamps(wav_path)
+
+            print("  Diarizing speakers...")
+            speaker_segments = self.diarizer.diarize(wav_path)
+            words_with_speakers = self.diarizer.assign_words_to_speakers(
+                word_timestamps, speaker_segments
+            )
+
             os.unlink(wav_path)
 
             if not text:
@@ -148,7 +159,18 @@ class FixedRecordAssistant:
 
             redacted, spans = self.pii.analyze(text)
 
+            current_speaker = None
+            speaker_parts = []
+            for ws in words_with_speakers:
+                if ws.speaker != current_speaker:
+                    current_speaker = ws.speaker
+                    short = ws.speaker.replace("SPEAKER_", "S")
+                    speaker_parts.append(f"[{short}]")
+                speaker_parts.append(ws.word)
+            speaker_text = " ".join(speaker_parts)
+
             print(f"\n  Heard:    {text}")
+            print(f"  Speakers: {speaker_text}")
             print(f"  Redacted: {redacted}")
 
             if spans:
