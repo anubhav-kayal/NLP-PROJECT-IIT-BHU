@@ -107,6 +107,36 @@ class PIIMask:
         "सक्सेना","सिंह","स्वामी",
     }
 
+    INDIAN_ORGS = {
+        "IIT","IIT Bombay","IIT Delhi","IIT Kanpur","IIT Kharagpur",
+        "IIT Madras","IIT Roorkee","IIT Guwahati","NIT","NIT Trichy",
+        "NIT Surathkal","NIT Warangal","IIIT","IIIT Hyderabad",
+        "BITS Pilani","BITS","BITSAT",
+        "IISC","IISc Bangalore","ISI Kolkata","ISI",
+        "AIIMS","AIIMS Delhi","PGI Chandigarh","CMC Vellore",
+        "Tata","Tata Motors","Tata Consultancy Services","TCS",
+        "Infosys","Wipro","HCL","Tech Mahindra","LTI","Mindtree",
+        "Reliance","Reliance Industries","Jio","Airtel","Vodafone",
+        "Idea","BSNL","MTNL","Bharat Electronics","BEL","BHEL",
+        "ONGC","IOCL","BPCL","HPCL","GAIL","NTPC","Power Grid",
+        "Adani","Adani Group","Mahindra","Mahindra & Mahindra",
+        "Bajaj","Bajaj Auto","Maruti Suzuki","Hyundai","Toyota",
+        "Honda","Tata Steel","JSW Steel","SAIL","Hindalco",
+        "HDFC","HDFC Bank","ICICI","ICICI Bank","SBI","State Bank",
+        "Axis Bank","Kotak Mahindra","Yes Bank","PNB","Canara Bank",
+        "Bank of Baroda","Union Bank","Indian Bank","IDBI",
+        "LIC","IRDAI","SEBI","RBI","NSE","BSE","NSDL","CDSL",
+        "Google","Microsoft","Amazon","Flipkart","Myntra","Swiggy",
+        "Zomato","Ola","Uber","Rapido","PhonePe","Paytm","Google Pay",
+        "GPay","BHIM","CRED","PolicyBazaar","Urban Company",
+        "Nykaa","Meesho","BYJU'S","Unacademy","Vedantu",
+        "MakeMyTrip","IRCTC","RedBus","OYO","BookMyShow",
+        "Zee","Star Plus","Colors TV","Sony TV","Times Now",
+        "Times of India","Hindustan Times","The Hindu",
+        "Indian Railways","ISRO","DRDO","BARC","TIFR",
+        "Supreme Court","High Court","Parliament","Rashtrapati Bhavan",
+    }
+
     CASTE_RELIGION_TERMS = {
         "BRAHMIN","BRAHMAN","THAKUR","RAJPUT","JAT","GURJAR","MARATHA",
         "KUNBI","PATIDAR","PATEL","YADAV","KURMI","KOERI","SHARMA",
@@ -155,10 +185,33 @@ class PIIMask:
     }
 
     ORG_FP_KEYWORDS = {
-        "PAN","Aadhaar","ITR","IFSC","UPI","KYC","NEFT","RTGS","IMPS",
+        "PAN","Aadhaar","ITR","IFSC",        "UPI","UPI ID","KYC","NEFT","RTGS","IMPS",
         "OTP","GST","TDS","TAN","DIN","CIN","LLP","HUF","NRI","FEMA",
         "RBI","SEBI","IRDAI","EPFO","ESIC","PF","EPS","NPS","PPF",
         "FD","RD","SIP","SWP","STP","AML","CAGR",
+        "Alexa","Siri","Google Assistant","Cortana","Bixby",
+        "WhatsApp","Telegram","Signal","Facebook","Instagram",
+        "Snapchat","Twitter","LinkedIn","YouTube","Chrome","Firefox",
+        "Safari","Edge","Opera","Android","iOS","Windows","MacOS",
+        "Linux","Ubuntu","Debian","Fedora","Python","Java","C++",
+        "Monday","Tuesday","Wednesday","Thursday","Friday","Saturday",
+        "Sunday","January","February","March","April","May","June",
+        "July","August","September","October","November","December",
+        "Spring","Summer","Autumn","Winter","Rainy","Monsoon",
+        "LPG","CNG","PNG","GST","HRA","LTA","ITDA",
+    }
+
+    BANK_ACC_KEYWORDS = {
+        "account","ac","a/c","acc","transfer","deposit","credit","debit",
+        "neft","rtgs","imps","wire","bank","savings","current","saving",
+        "a/c","account no","account number","acc no","acc number",
+        "beneficiary","ifsc","branch","fund","payment","salary",
+        "remit","transaction","folio",
+    }
+
+    AADHAAR_KEYWORDS = {
+        "aadhaar","aadhar","uid","unique id","aadhaar number",
+        "aadhar number","uidai","biometric","identity",
     }
 
     RULE_PRIORITY = {
@@ -174,9 +227,9 @@ class PIIMask:
         "PER":      6,
         "BANK_ACC": 5,
         "CASTE_RELIGION": 5,
+        "GPE":      5,
+        "LOC":      5,
         "ORG":      4,
-        "GPE":      4,
-        "LOC":      4,
     }
 
     LABEL_MAP = {
@@ -195,6 +248,68 @@ class PIIMask:
         "PINCODE":        "PINCODE_REDACTED",
         "CASTE_RELIGION": "CASTE_RELIGION_REDACTED",
         "MEDICAL":        "MEDICAL_REDACTED",
+    }
+
+    NOT_GPE_WORDS_SPACY = {
+        "hai","ho","hain","ka","ki","ke","ko","se","mein","me","par",
+        "aur","ya","to","bhi","hi","tha","the","thi","thay",
+    }
+
+    NOT_PERSON_WORDS = {
+        "person","people","someone","anyone","everyone","nobody",
+        "name","your","my","his","her","our","their","its",
+        "kyc","pan","aadhaar","aadhar","pin","otp","ifsc","upi",
+        "hello","hey","hi","good","morning","evening","night",
+        "please","thanks","thank","sorry","okay","ok","yes","no",
+        "call","text","email","send","get","set","put","make","do",
+        "one","two","three","four","five","six","seven","eight",
+        "nine","ten","first","second","third","last","next",
+        "mister","mr","mrs","ms","dr","doctor","sir","madam","ma'am",
+        "brother","sister","father","mother","uncle","aunt",
+        "manager","owner","admin","user","customer","client",
+        "colleague","friend","partner","spouse","wife","husband",
+        "self","helped","like","reply","provided","joined",
+        "works","worked","working","based","located","joined",
+        "from","into","about","with","without","through",
+        "staff","didi","bhai","bhaiya","boss","sir","madam",
+        "mam","teacher","professor","principal","director",
+        "chairman","ceo","founder","coach","captain","leader",
+        "member","volunteer","representative","agent","officer",
+        "inspector","constable","judge","lawyer","advocate",
+        "engineer","architect","designer","developer","coder",
+        "analyst","consultant","specialist","expert","trainer",
+        "instructor","mentor","guide","assistant","secretary",
+        "treasurer","auditor","accountant","cashier","teller",
+        "guard","watchman","driver","pilot","steward","attendant",
+        "nurse","compound","sweeper","peon","clerk","staff",
+        "minister","secretary","commissioner","mayor","counselor",
+    }
+
+    NOT_GPE_WORDS = {
+        "person","people","someone","anyone","everyone","nobody",
+        "name","your","my","his","her","our","their","its",
+        "kyc","otp","pin","ifsc","upi","aadhaar","aadhar",
+        "hello","hey","hi","good","please","thanks","thank",
+        "ok","yes","no","maybe","sure","right","left","top",
+        "bottom","front","back","side","inside","outside",
+        "one","two","three","four","five","six","seven","eight",
+        "nine","ten","first","second","third","last","next",
+        "house","home","office","room","place","area","zone",
+        "section","part","block","sector","phase","stage",
+        "street","road","lane","avenue","society","colony",
+        "pincode","pin","code","zip","address","location",
+        "city","town","village","state","country","district",
+        "ward","zone","region","territory","province",
+        "from","into","about","with","without","through",
+        "works","worked","working","based","located","joined",
+        "report","submit","share","provide","update","upload",
+        "download","view","check","verify","confirm","review",
+        "for","the","and","but","or","nor","not","very",
+        "just","only","also","too","yet","so","now","then",
+        "here","there","where","when","why","how","what","which",
+        "this","that","these","those","all","each","every",
+        "some","any","no","none","both","either","neither",
+        "self","helped","like","reply","provided",
     }
 
     CONFIDENCE_THRESHOLD = 0.75
@@ -232,6 +347,12 @@ class PIIMask:
                 ))
         return spans
 
+    def _context_around(self, text: str, pos: int, window: int = 40) -> str:
+        start = max(0, pos - window)
+        end = min(len(text), pos + window)
+        around = text[start:end].lower()
+        return around
+
     def _skip_rule_match(self, text, match, label):
         if label == "BANK_ACC":
             matched = match.group()
@@ -242,6 +363,11 @@ class PIIMask:
                 return True
         if label == "AADHAAR":
             if match.start() > 0 and text[match.start() - 1] == "+":
+                return True
+            context = self._context_around(text, match.start())
+            has_aadhaar_kw = any(kw in context for kw in self.AADHAAR_KEYWORDS)
+            has_bank_kw = any(kw in context for kw in self.BANK_ACC_KEYWORDS)
+            if has_bank_kw and not has_aadhaar_kw:
                 return True
         return False
 
@@ -265,6 +391,15 @@ class PIIMask:
         all_first_lower = {n.lower() for n in all_first}
         all_last_lower = {n.lower() for n in all_last}
 
+        not_person_lower = {w.lower() for w in self.NOT_PERSON_WORDS}
+        not_gpe_lower = {w.lower() for w in self.NOT_GPE_WORDS}
+
+        orgs_lower = {o.lower() for o in self.INDIAN_ORGS}
+        orgs_by_first_word = {}
+        for org in self.INDIAN_ORGS:
+            first_word = org.split()[0].lower()
+            orgs_by_first_word.setdefault(first_word, []).append(org.lower())
+
         idx = 0
         while idx < len(tokens):
             tok = tokens[idx]
@@ -272,19 +407,46 @@ class PIIMask:
             clean = tok.strip(".,!?")
             lower = clean.lower()
 
-            is_first = lower in all_first_lower
+            org_found = False
+            if lower in orgs_by_first_word:
+                for candidate in orgs_by_first_word[lower]:
+                    candidate_tokens = candidate.split()
+                    if idx + len(candidate_tokens) > len(tokens):
+                        continue
+                    match = True
+                    for j, ct in enumerate(candidate_tokens):
+                        c_tok = tokens[idx + j].strip(".,!?")
+                        if c_tok.lower() != ct:
+                            match = False
+                            break
+                    if match:
+                        org_end = raw_positions[idx + len(candidate_tokens) - 1][2]
+                        spans.append(RedactedSpan(
+                            start=t_start, end=org_end,
+                            text=text[t_start:org_end], label="ORG", confidence=0.9
+                        ))
+                        idx += len(candidate_tokens) - 1
+                        org_found = True
+                        break
+
+            if org_found:
+                idx += 1
+                continue
+
+            is_first = lower in all_first_lower and lower not in not_person_lower
 
             if is_first and idx + 1 < len(tokens):
                 next_tok = tokens[idx + 1]
                 n_start, n_end = raw_positions[idx + 1][1], raw_positions[idx + 1][2]
                 nclean = next_tok.strip(".,!?")
-                if nclean.lower() in all_last_lower:
+                nlower = nclean.lower()
+                if nlower in all_last_lower:
                     spans.append(RedactedSpan(
                         start=t_start, end=n_end,
                         text=text[t_start:n_end], label="PERSON", confidence=0.9
                     ))
                     idx += 1
-                else:
+                elif nlower not in not_person_lower:
                     spans.append(RedactedSpan(
                         start=t_start, end=t_end,
                         text=tok, label="PERSON", confidence=0.85
@@ -293,7 +455,7 @@ class PIIMask:
                 spans.append(RedactedSpan(
                     start=t_start, end=t_end, text=tok, label="PERSON", confidence=0.85
                 ))
-            elif lower in city_lower:
+            elif lower in city_lower and lower not in not_gpe_lower:
                 spans.append(RedactedSpan(
                     start=t_start, end=t_end, text=tok, label="GPE", confidence=0.85
                 ))
@@ -323,6 +485,10 @@ class PIIMask:
                     return True
         return False
 
+    def _is_known_city(self, text: str) -> bool:
+        clean = text.strip(".,!?").lower()
+        return clean in {c.lower() for c in self.INDIAN_CITIES}
+
     def _spacy_spans(self, text: str) -> List[RedactedSpan]:
         if not self.nlp:
             return []
@@ -331,11 +497,18 @@ class PIIMask:
         for ent in doc.ents:
             if ent.label_ not in self.LABEL_MAP:
                 continue
-            if ent.label_ in ("ORG", "GPE", "LOC"):
-                if self._spacy_span_near_pii(text, ent):
+            if self._spacy_span_near_pii(text, ent):
+                continue
+            if ent.label_ == "ORG" and ent.text.strip() in self.ORG_FP_KEYWORDS:
+                continue
+            if ent.label_ in ("ORG", "PERSON") and self._is_known_city(ent.text):
+                continue
+            if ent.label_ == "PERSON":
+                tokens = ent.text.lower().split()
+                if any(t.strip(".,!?") in self.NOT_PERSON_WORDS for t in tokens):
                     continue
-                if ent.label_ == "ORG" and ent.text.strip() in self.ORG_FP_KEYWORDS:
-                    continue
+            if ent.label_ == "GPE" and ent.text.strip().lower() in self.NOT_GPE_WORDS | self.NOT_GPE_WORDS_SPACY:
+                continue
             spans.append(RedactedSpan(
                 start=ent.start_char,
                 end=ent.end_char,
