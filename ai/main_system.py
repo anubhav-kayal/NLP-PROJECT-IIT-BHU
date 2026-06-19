@@ -10,6 +10,8 @@ from pii_mask import PIIMask
 from transcriber import LocalTranscriber
 from streaming_pipeline import StreamingPipeline
 from diarization import SpeakerDiarizer
+from whitelist import Whitelist
+from audit_log import AuditLog
 
 SAMPLE_RATE    = 16000
 CHANNELS       = 1
@@ -31,20 +33,22 @@ BEEP_FREQUENCIES = {
     "ORG":      440,
     "GPE":      440,
     "LOC":      440,
+    "CASTE_RELIGION": 440,
+    "MEDICAL":  440,
     "DEFAULT":  440,
 }
 
 
 class FixedRecordAssistant:
 
-    def __init__(self):
+    def __init__(self, context_mode="all", whitelist=None, audit=None, consent=False):
         print("=" * 60)
         print("  PRIVACY-PRESERVING VOICE ASSISTANT (Fixed-Record Mode)")
         print("  Loading models...")
         print("=" * 60)
 
         print("\n1. Loading PII Filter (spaCy + Indian rules)...")
-        self.pii = PIIMask()
+        self.pii = PIIMask(context_mode=context_mode)
 
         print("\n2. Loading Whisper (small)...")
         self.transcriber = LocalTranscriber(model_size="small")
@@ -54,7 +58,16 @@ class FixedRecordAssistant:
 
         self.audio = pyaudio.PyAudio()
         self.session_stats = {"total": 0, "redacted": 0, "pii_counts": {}}
+        self.whitelist = whitelist or Whitelist()
+        self.audit = audit or AuditLog(enabled=False)
+        self.consent_mode = consent
+        self.consent_granted = True
         print("\n  System ready.\n")
+
+    def _toggle_consent(self):
+        self.consent_granted = not self.consent_granted
+        status = "ACTIVE" if self.consent_granted else "PAUSED"
+        print(f"\n  >>> Redaction {'RESUMED' if self.consent_granted else 'PAUSED'} <<<")
 
     def _generate_beep(self, frequency, duration):
         num_samples = int(SAMPLE_RATE * duration)
@@ -130,6 +143,8 @@ class FixedRecordAssistant:
 
     def run(self):
         print("Press ENTER to speak, 'q' + ENTER to quit.\n")
+        if self.consent_mode:
+            print("  Consent mode: redaction is ACTIVE. Type 'c' to toggle pause/resume.\n")
         while True:
             try:
                 cmd = input("  [ENTER to speak / q to quit] > ").strip().lower()
@@ -138,6 +153,13 @@ class FixedRecordAssistant:
 
             if cmd == "q":
                 break
+            if cmd == "c" and self.consent_mode:
+                self._toggle_consent()
+                continue
+
+            if self.consent_mode and not self.consent_granted:
+                print("  [Redaction paused — audio will pass through]\n")
+                continue
 
             print("\n  Listening for 4 seconds — speak now...")
             wav_path = self._record()
@@ -159,6 +181,8 @@ class FixedRecordAssistant:
 
             redacted, spans = self.pii.analyze(text)
 
+            spans = [s for s in spans if not self.whitelist.contains_any(s.text)]
+
             current_speaker = None
             speaker_parts = []
             for ws in words_with_speakers:
@@ -172,6 +196,13 @@ class FixedRecordAssistant:
             print(f"\n  Heard:    {text}")
             print(f"  Speakers: {speaker_text}")
             print(f"  Redacted: {redacted}")
+
+            self.audit.log_event(
+                original_text=text,
+                redacted_text=redacted,
+                spans=spans,
+                speaker_info=speaker_text[:100],
+            )
 
             if spans:
                 summary = self.pii.get_redaction_summary(spans)
@@ -200,14 +231,66 @@ if __name__ == "__main__":
                         help="Route streaming output to BlackHole virtual microphone")
     parser.add_argument("--blackhole-device", type=int, default=None,
                         help="BlackHole device index")
+    parser.add_argument("--context-mode", choices=["all", "personal", "public"],
+                        default="all",
+                        help="Redaction context mode (default: all)")
+    parser.add_argument("--consent", action="store_true",
+                        help="Enable consent mode (toggle redaction with 'c' key)")
+    parser.add_argument("--audit", action="store_true",
+                        help="Enable encrypted local audit log")
+    parser.add_argument("--view-audit", action="store_true",
+                        help="Decrypt and view the audit log")
+    parser.add_argument("--whitelist-add", type=str, default=None,
+                        help="Add a term to the whitelist")
+    parser.add_argument("--whitelist-remove", type=str, default=None,
+                        help="Remove a term from the whitelist")
+    parser.add_argument("--whitelist-list", action="store_true",
+                        help="List all whitelisted terms")
     args = parser.parse_args()
 
+    if args.view_audit:
+        AuditLog.print_log()
+        sys.exit(0)
+
+    wl = Whitelist()
+    if args.whitelist_add:
+        wl.add(args.whitelist_add)
+        print(f"  Added '{args.whitelist_add}' to whitelist.")
+        sys.exit(0)
+    if args.whitelist_remove:
+        wl.remove(args.whitelist_remove)
+        print(f"  Removed '{args.whitelist_remove}' from whitelist.")
+        sys.exit(0)
+    if args.whitelist_list:
+        terms = wl.list()
+        if terms:
+            print("  Whitelisted terms:")
+            for t in terms:
+                print(f"    - {t}")
+        else:
+            print("  Whitelist is empty.")
+        sys.exit(0)
+
+    audit = AuditLog(enabled=args.audit)
+
     if args.fixed:
-        assistant = FixedRecordAssistant()
+        assistant = FixedRecordAssistant(
+            context_mode=args.context_mode,
+            whitelist=wl,
+            audit=audit,
+            consent=args.consent,
+        )
         assistant.run()
     else:
         pipeline = StreamingPipeline(
             use_blackhole=args.blackhole,
             blackhole_device_id=args.blackhole_device,
+            context_mode=args.context_mode,
+            whitelist=wl,
+            audit=audit,
+            consent=args.consent,
         )
         pipeline.run()
+
+    if args.audit:
+        audit.flush()
