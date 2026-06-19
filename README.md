@@ -114,6 +114,27 @@ cd ai/
 python main_system.py --blackhole
 ```
 
+### Phase 3 Features
+```bash
+# Context-aware redaction (only redact personal disclosures)
+python main_system.py --context-mode personal
+
+# Consent mode (toggle pause/resume with 'c' key)
+python main_system.py --fixed --consent
+
+# Whitelist management
+python main_system.py --whitelist-add "Rahul"
+python main_system.py --whitelist-remove "Rahul"
+python main_system.py --whitelist-list
+
+# Encrypted audit log
+python main_system.py --fixed --audit
+python main_system.py --view-audit
+
+# Combine features
+python main_system.py --blackhole --context-mode personal --consent --audit
+```
+
 ### Run Benchmark
 ```bash
 cd ai/
