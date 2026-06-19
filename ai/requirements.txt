@@ -3,4 +3,5 @@ pyaudio
 spacy
 numpy
 pyannote.audio
+cryptography
  
