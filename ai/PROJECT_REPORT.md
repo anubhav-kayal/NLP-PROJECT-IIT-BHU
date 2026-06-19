@@ -172,20 +172,77 @@ Microphone → Whisper (Local STT) → PII Mask (spaCy + Regex) → Redacted Aud
 
 ---
 
-## Remaining Issues & Open Items
+## Changes Made (Jun 19, 2026 — Remaining Issues Fix + Phase 3 Start)
 
-### Known Limitations
+### 12. Fixed ORG F1 (0.828 → 0.881)
+**File:** `ai/pii_mask.py`
+- Expanded `INDIAN_ORGS` from ~100 to 180+ entries (added startups, PSUs, media houses, hospitals, more educational institutions)
+- Added `ORG_FP_KEYWORDS_EXTRA` (100+ common non-org words) to filter spaCy ORG FPs
+- Added strict ORG filtering for common words in `_spacy_spans`
 
-| Issue | Root Cause | Status |
-|---|---|---|
-| **ORG F1=0.828** | Dictionary misses some orgs; spaCy misclassifies generic terms as ORG | Acceptable — ORG detection for well-known companies is correct behavior; non-org words filtered |
-| **BANK_ACC recall=0.734** | 183 remaining FNs are 12-digit numbers without banking context keywords within 80 chars | Could widen context window or add keyword-matching heuristics |
-| **CASTE_RELIGION F1=0.00** | 61 FPs but **0 test samples** in dataset with caste/religion labels | Dataset issue — add labeled caste/religion samples |
-| **PERSON recall=0.884** | spaCy + dictionary misses some last-name-only or single-name patterns | Could add lookup for common paired last names |
+### 13. Fixed BANK_ACC Recall (0.734 → 0.763)
+**File:** `ai/pii_mask.py`
+- Widened context window from 40 → 80 characters (160 char total)
+- Added `_context_around_wide()` with 160-char window (320 char total) as secondary check
+- Added banking keyword heuristic with fallback to wide context
+
+### 14. Fixed CASTE_RELIGION F1 (0.000 → 0.885)
+**Files:** `ai/pii_mask.py`, `ai/generate_dataset.py`
+- Added 35 `CASTE_RELIGION_VALUES` and `CASTE_RELIGION_CONTEXT` templates to dataset generator
+- Added `CASTE_RELIGION` to `PII_TYPES`, targets (4% distribution ~589 samples)
+- Fixed priority clash: skipped last-name-only PERSON detection for caste/religion terms
+- Filtered spaCy PERSON entities that are actually caste/religion terms
+- Skipped first-name-only PERSON detection for standalone caste-overlapping words
+
+### 15. Fixed PERSON Recall (0.884 → 0.925)
+**File:** `ai/pii_mask.py`
+- Added last-name-only detection (confidence 0.75) for single surnames
+- Filtered last-name detection for caste/medical overlapping terms
+
+### 16. Context-Aware Redaction
+**File:** `ai/pii_mask.py`
+- Added `DISCLOSURE_SIGNALS` set (30+ possessive/disclosure keywords)
+- Added `PUBLIC_CONTEXT_SIGNALS` set (20+ general/public reference keywords)
+- Added `classify_span_context()` — examines 5 words before and 3 after each span
+- Added `context_mode` parameter to `PIIMask.__init__()` and `analyze()`:
+  - `"all"`: redact all PII (default behavior)
+  - `"personal"`: only redact PII in personal disclosure context
+  - `"public"`: only redact PII in public/general reference context
+- Added `context` field to `RedactedSpan` dataclass
+
+### 17. Whitelist Mechanism
+**New file:** `ai/whitelist.json`, `ai/whitelist.py`
+- Persistent JSON-based whitelist (`whitelist.json`)
+- `Whitelist` class with `add()`, `remove()`, `is_whitelisted()`, `contains_any()` methods
+- CLI: `--whitelist-add`, `--whitelist-remove`, `--whitelist-list`
+
+### 18. Consent Mode
+**Files:** `ai/main_system.py`, `ai/streaming_pipeline.py`
+- Thread-safe `consent_granted` flag with `consent_lock` in streaming mode
+- Type `c` + ENTER to toggle pause/resume in fixed-record mode
+- When paused: audio passes through without redaction
+- CLI: `--consent`
+
+### 19. Encrypted Local Audit Log
+**New file:** `ai/audit_log.py`
+- Fernet (symmetric) encryption using `cryptography` library
+- Auto-generates key on first use (stored in `ai/audit/.audit_key`, `chmod 600`)
+- Logs: timestamp, original text, redacted text, PII types, speaker info
+- Appends to encrypted file `ai/audit/audit_log.enc`
+- CLI: `--audit` (enable logging), `--view-audit` (decrypt & display)
 
 ---
 
-## Future Work Plan (From Original Spec)
+## Known Limitations
+
+| Issue | Root Cause | Status |
+|---|---|---|
+| **BANK_ACC recall=0.763** | 152 remaining FNs are 12-digit numbers without banking context keywords | Acceptable — widening further would trade off AADHAAR accuracy |
+| **GPE precision=0.759** | 178 FPs are mostly cities in no-PII dataset samples; correct behavior in real use | Dataset artifact |
+
+---
+
+## Future Work Plan
 
 ### Phase 2: Core Engine (Weeks 3–4)
 - [x] Sliding window pipeline (2-3s rolling, instead of fixed 4s)
@@ -195,13 +252,13 @@ Microphone → Whisper (Local STT) → PII Mask (spaCy + Regex) → Redacted Aud
 - [x] Speaker diarization (pyannote + energy-based VAD)
 - [x] Caste/religion and medical information detection
 - [ ] 500+ annotated Indian sentences training set
-- [x] F1 > 0.85 per category (10/11 categories achieved)
+- [x] F1 > 0.85 per category (12/13 categories achieved)
 
 ### Phase 3: Product Features
-- [ ] Context-aware redaction (public vs personal disclosures)
-- [ ] Whitelist mechanism (bypass redaction for known contacts)
-- [ ] Consent mode (pause redaction on demand)
-- [ ] Encrypted local audit log
+- [x] Context-aware redaction (public vs personal disclosures)
+- [x] Whitelist mechanism (bypass redaction for known contacts)
+- [x] Consent mode (pause redaction on demand)
+- [x] Encrypted local audit log
 - [ ] Post-call MP3/WAV file redaction
 - [ ] Transcript integration (Zoom/Meet exports)
 - [ ] PDF export of redacted transcripts
@@ -224,10 +281,12 @@ Microphone → Whisper (Local STT) → PII Mask (spaCy + Regex) → Redacted Aud
 
 | File | Status | Purpose |
 |---|---|---|
-| `ai/diarization.py` | Modified | Energy-based VAD fallback, word-to-speaker mapping |
-| `ai/streaming_pipeline.py` | Modified | Integrated speaker diarization into streaming pipeline |
-| `ai/main_system.py` | Modified | Added diarization to fixed-record mode |
-| `ai/pii_mask.py` | Modified | AADHAAR/BANK_ACC context disambiguation, ORG dictionary, GPE fix, PERSON FP filter |
-| `ai/requirements.txt` | Modified | Added pyannote.audio |
-| `ai/benchmark_7000_results.json` | Modified | Updated with current benchmark metrics |
+| `ai/pii_mask.py` | Modified | ORG dict expansion, BANK_ACC context fix, CASTE_RELIGION detection, PERSON recall fix, context-aware redaction, context_mode parameter |
+| `ai/generate_dataset.py` | Modified | Added CASTE_RELIGION samples to 7000 dataset |
+| `ai/whitelist.py` | **New** | Whitelist mechanism (JSON persistent) |
+| `ai/audit_log.py` | **New** | Encrypted audit log (Fernet) |
+| `ai/main_system.py` | Modified | Integrated all 4 Phase 3 features; added CLI args |
+| `ai/streaming_pipeline.py` | Modified | Integrated whitelist, audit, consent mode |
+| `ai/requirements.txt` | Modified | Added cryptography |
+| `ai/benchmark_7000_results.json` | Modified | Updated benchmark metrics |
 | `ai/benchmark_7000_errors.json` | Modified | Updated error log |
