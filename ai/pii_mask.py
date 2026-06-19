@@ -388,7 +388,13 @@ class PIIMask:
                 ))
         return spans
 
-    def _context_around(self, text: str, pos: int, window: int = 40) -> str:
+    def _context_around(self, text: str, pos: int, window: int = 80) -> str:
+        start = max(0, pos - window)
+        end = min(len(text), pos + window)
+        around = text[start:end].lower()
+        return around
+
+    def _context_around_wide(self, text: str, pos: int, window: int = 160) -> str:
         start = max(0, pos - window)
         end = min(len(text), pos + window)
         around = text[start:end].lower()
@@ -410,6 +416,13 @@ class PIIMask:
             has_bank_kw = any(kw in context for kw in self.BANK_ACC_KEYWORDS)
             if has_bank_kw and not has_aadhaar_kw:
                 return True
+            matched_digits = re.sub(r"\s+", "", match.group())
+            if len(matched_digits) == 12 and not has_aadhaar_kw and not has_bank_kw:
+                wide_context = self._context_around_wide(text, match.start())
+                has_aadhaar_kw_wide = any(kw in wide_context for kw in self.AADHAAR_KEYWORDS)
+                has_bank_kw_wide = any(kw in wide_context for kw in self.BANK_ACC_KEYWORDS)
+                if has_bank_kw_wide and not has_aadhaar_kw_wide:
+                    return True
         return False
 
     def _dictionary_spans(self, text: str) -> List[RedactedSpan]:
