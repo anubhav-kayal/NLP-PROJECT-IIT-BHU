@@ -488,6 +488,7 @@ class PIIMask:
                 continue
 
             is_first = lower in all_first_lower and lower not in not_person_lower
+            is_caste_word = lower in caste_lower
 
             if is_first and idx + 1 < len(tokens):
                 next_tok = tokens[idx + 1]
@@ -500,14 +501,18 @@ class PIIMask:
                         text=text[t_start:n_end], label="PERSON", confidence=0.9
                     ))
                     idx += 1
-                elif nlower not in not_person_lower:
+                elif nlower not in not_person_lower and not is_caste_word:
                     spans.append(RedactedSpan(
                         start=t_start, end=t_end,
                         text=tok, label="PERSON", confidence=0.85
                     ))
-            elif is_first:
+            elif is_first and not is_caste_word:
                 spans.append(RedactedSpan(
                     start=t_start, end=t_end, text=tok, label="PERSON", confidence=0.85
+                ))
+            elif lower in all_last_lower and lower not in all_first_lower and lower not in not_person_lower and lower not in caste_lower and lower not in medical_lower:
+                spans.append(RedactedSpan(
+                    start=t_start, end=t_end, text=tok, label="PERSON", confidence=0.75
                 ))
             elif lower in city_lower and lower not in not_gpe_lower:
                 spans.append(RedactedSpan(
@@ -567,6 +572,10 @@ class PIIMask:
             if ent.label_ == "PERSON":
                 tokens = ent.text.lower().split()
                 if any(t.strip(".,!?") in self.NOT_PERSON_WORDS for t in tokens):
+                    continue
+                ent_lower = ent.text.strip().lower()
+                caste_lower = {c.lower() for c in self.CASTE_RELIGION_TERMS}
+                if ent_lower in caste_lower:
                     continue
             if ent.label_ == "GPE" and ent.text.strip().lower() in self.NOT_GPE_WORDS | self.NOT_GPE_WORDS_SPACY:
                 continue
