@@ -212,4 +212,8 @@ benchmark_7000_errors.json
 test_dataset_7000.json
 
 # Local project report (not for github)
-AI/PROJECT_REPORT.md
+ai/PROJECT_REPORT.md
+
+# User-specific data (whitelist, audit logs)
+ai/whitelist.json
+ai/audit/
