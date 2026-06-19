@@ -3,57 +3,39 @@
     "size": 7000
   },
   "overall": {
-    "avg_inference_ms": 2.22,
-    "precision": 0.9511,
-    "recall": 0.9457,
-    "f1": 0.9484,
-    "true_positives": 8356,
-    "false_positives": 430,
-    "false_negatives": 480
+    "avg_inference_ms": 2.5,
+    "precision": 0.9503,
+    "recall": 0.9492,
+    "f1": 0.9497,
+    "true_positives": 8438,
+    "false_positives": 441,
+    "false_negatives": 452
   },
   "per_category": {
-    "BANK_ACC": {
-      "precision": 1.0,
-      "recall": 0.7336,
-      "f1": 0.8463,
-      "samples": 687,
-      "tp": 504,
-      "fp": 0,
-      "fn": 183
+    "ORG": {
+      "precision": 0.8937,
+      "recall": 0.8658,
+      "f1": 0.8796,
+      "samples": 544,
+      "tp": 471,
+      "fp": 56,
+      "fn": 73
     },
     "PAN": {
       "precision": 1.0,
       "recall": 1.0,
       "f1": 1.0,
-      "samples": 963,
-      "tp": 963,
+      "samples": 851,
+      "tp": 851,
       "fp": 0,
       "fn": 0
     },
-    "ORG": {
-      "precision": 0.8513,
-      "recall": 0.8065,
-      "f1": 0.8282,
-      "samples": 589,
-      "tp": 475,
-      "fp": 83,
-      "fn": 114
-    },
-    "PHONE": {
-      "precision": 0.993,
-      "recall": 1.0,
-      "f1": 0.9965,
-      "samples": 992,
-      "tp": 992,
-      "fp": 7,
-      "fn": 0
-    },
-    "EMAIL": {
+    "PINCODE": {
       "precision": 1.0,
       "recall": 1.0,
       "f1": 1.0,
-      "samples": 749,
-      "tp": 749,
+      "samples": 587,
+      "tp": 587,
       "fp": 0,
       "fn": 0
     },
@@ -61,64 +43,82 @@
       "precision": 1.0,
       "recall": 1.0,
       "f1": 1.0,
-      "samples": 712,
-      "tp": 712,
+      "samples": 653,
+      "tp": 653,
       "fp": 0,
       "fn": 0
-    },
-    "AADHAAR": {
-      "precision": 0.9156,
-      "recall": 0.9793,
-      "f1": 0.9464,
-      "samples": 919,
-      "tp": 900,
-      "fp": 83,
-      "fn": 19
     },
     "UPI_ID": {
       "precision": 1.0,
       "recall": 1.0,
       "f1": 1.0,
-      "samples": 888,
-      "tp": 888,
+      "samples": 784,
+      "tp": 784,
       "fp": 0,
       "fn": 0
     },
-    "PERSON": {
-      "precision": 0.9142,
-      "recall": 0.8841,
-      "f1": 0.8989,
-      "samples": 1242,
-      "tp": 1098,
-      "fp": 103,
-      "fn": 144
-    },
-    "GPE": {
-      "precision": 0.8593,
-      "recall": 0.9629,
-      "f1": 0.9081,
-      "samples": 539,
-      "tp": 519,
-      "fp": 85,
-      "fn": 20
-    },
-    "PINCODE": {
+    "BANK_ACC": {
       "precision": 1.0,
-      "recall": 1.0,
-      "f1": 1.0,
-      "samples": 556,
-      "tp": 556,
+      "recall": 0.7629,
+      "f1": 0.8655,
+      "samples": 641,
+      "tp": 489,
       "fp": 0,
+      "fn": 152
+    },
+    "PHONE": {
+      "precision": 0.995,
+      "recall": 1.0,
+      "f1": 0.9975,
+      "samples": 1001,
+      "tp": 1001,
+      "fp": 5,
       "fn": 0
     },
     "CASTE_RELIGION": {
-      "precision": 0.0,
-      "recall": 0.0,
-      "f1": 0.0,
-      "samples": 0,
-      "tp": 0,
-      "fp": 61,
+      "precision": 0.9149,
+      "recall": 0.8574,
+      "f1": 0.8852,
+      "samples": 589,
+      "tp": 505,
+      "fp": 47,
+      "fn": 84
+    },
+    "EMAIL": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "samples": 692,
+      "tp": 692,
+      "fp": 0,
       "fn": 0
+    },
+    "GPE": {
+      "precision": 0.7587,
+      "recall": 0.9697,
+      "f1": 0.8513,
+      "samples": 561,
+      "tp": 544,
+      "fp": 173,
+      "fn": 17
+    },
+    "PERSON": {
+      "precision": 0.9205,
+      "recall": 0.9246,
+      "f1": 0.9225,
+      "samples": 1127,
+      "tp": 1042,
+      "fp": 90,
+      "fn": 85
+    },
+    "AADHAAR": {
+      "precision": 0.9339,
+      "recall": 0.9523,
+      "f1": 0.943,
+      "samples": 860,
+      "tp": 819,
+      "fp": 58,
+      "fn": 41
     },
     "LOC": {
       "precision": 0.0,
@@ -126,9 +126,9 @@
       "f1": 0.0,
       "samples": 0,
       "tp": 0,
-      "fp": 8,
+      "fp": 12,
       "fn": 0
     }
   },
-  "error_count": 672
+  "error_count": 651
 }
