@@ -355,8 +355,33 @@ class PIIMask:
 
     CONFIDENCE_THRESHOLD = 0.75
 
-    def __init__(self):
+    DISCLOSURE_SIGNALS = {
+        "my","mine","our","ours","myself","your","yours",
+        "i am","i'm","this is","that's my","here is","here's",
+        "is my","are my","my name","i am called",
+        "call me","reach me","contact me","message me",
+        "send me","email me","text me",
+        "i live","i stay","i work","i study",
+        "i was born","my address","my number",
+        "registered","linked","verified","submitted",
+        "provided","shared","gave","entered",
+        "update my","change my","add my",
+    }
+
+    PUBLIC_CONTEXT_SIGNALS = {
+        "example","format","like","such as","e.g.","i.e.",
+        "typically","usually","generally","commonly",
+        "is used for","are used for","can be",
+        "what is","what's","what are",
+        "is a","are a","refers to","meaning",
+        "called","known as","referred to as",
+        "sample","demo","test","fictional","dummy",
+        "the format of","the pattern of","the structure of",
+    }
+
+    def __init__(self, context_mode="all"):
         self.nlp = self._load_spacy()
+        self.context_mode = context_mode
 
     def _load_spacy(self):
         models = ["en_core_web_md", "en_core_web_sm", "en_core_web_lg"]
@@ -369,6 +394,30 @@ class PIIMask:
                 continue
         print("  No spaCy model found. Run: python3 -m spacy download en_core_web_sm")
         return None
+
+    def _words_before_span(self, text: str, span_start: int, count: int = 5) -> str:
+        before = text[:span_start].strip()
+        words = before.split()
+        return " ".join(words[-count:]).lower()
+
+    def _words_after_span(self, text: str, span_end: int, count: int = 5) -> str:
+        after = text[span_end:].strip()
+        words = after.split()
+        return " ".join(words[:count]).lower()
+
+    def classify_span_context(self, text: str, span) -> str:
+        before = self._words_before_span(text, span.start, 5)
+        after = self._words_after_span(text, span.end, 3)
+        combined = before + " " + after
+        for signal in self.DISCLOSURE_SIGNALS:
+            if signal in combined:
+                return "personal"
+        for signal in self.PUBLIC_CONTEXT_SIGNALS:
+            if signal in combined:
+                return "public"
+        if any(word in before for word in ("my","mine","our")):
+            return "personal"
+        return "personal"
 
     def _rule_based_spans(self, text: str) -> List[RedactedSpan]:
         spans = []
@@ -610,13 +659,26 @@ class PIIMask:
                 merged.append(current)
         return merged
 
-    def analyze(self, text: str) -> Tuple[str, List[RedactedSpan]]:
+    def analyze(self, text: str, context_mode: Optional[str] = None) -> Tuple[str, List[RedactedSpan]]:
         """
         Returns (redacted_text, list_of_detected_spans)
+        context_mode: "all" (default), "personal", or "public"
         """
         all_spans = self._rule_based_spans(text) + self._dictionary_spans(text) + self._spacy_spans(text)
         all_spans = [s for s in all_spans if s.confidence >= self.CONFIDENCE_THRESHOLD]
         merged = self._merge_spans(all_spans)
+
+        mode = context_mode or self.context_mode
+        if mode != "all":
+            classified = []
+            for span in merged:
+                ctx = self.classify_span_context(text, span)
+                span.context = ctx
+                if mode == "personal" and ctx == "personal":
+                    classified.append(span)
+                elif mode == "public" and ctx == "public":
+                    classified.append(span)
+            merged = classified
 
         # Build redacted text
         result = []
