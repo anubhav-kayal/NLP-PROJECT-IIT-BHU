@@ -1,7 +1,7 @@
 import re
 import spacy
-from dataclasses import dataclass
-from typing import List, Tuple
+from dataclasses import dataclass, field
+from typing import List, Tuple, Optional
 
 @dataclass
 class RedactedSpan:
@@ -10,6 +10,7 @@ class RedactedSpan:
     text: str
     label: str
     confidence: float
+    context: Optional[str] = None
 
 class PIIMask:
     """
@@ -109,32 +110,72 @@ class PIIMask:
 
     INDIAN_ORGS = {
         "IIT","IIT Bombay","IIT Delhi","IIT Kanpur","IIT Kharagpur",
-        "IIT Madras","IIT Roorkee","IIT Guwahati","NIT","NIT Trichy",
-        "NIT Surathkal","NIT Warangal","IIIT","IIIT Hyderabad",
-        "BITS Pilani","BITS","BITSAT",
+        "IIT Madras","IIT Roorkee","IIT Guwahati","IIT BHU","IIT BHU",
+        "NIT","NIT Trichy","NIT Surathkal","NIT Warangal","NIT Rourkela",
+        "NIT Calicut","NIT Durgapur","NIT Silchar",
+        "IIIT","IIIT Hyderabad","IIIT Delhi","IIIT Allahabad","IIIT Bangalore",
+        "BITS Pilani","BITS","BITSAT","BITS Hyderabad",
         "IISC","IISc Bangalore","ISI Kolkata","ISI",
         "AIIMS","AIIMS Delhi","PGI Chandigarh","CMC Vellore",
+        "JNU","Jamia Millia Islamia","AMU","Aligarh Muslim University",
+        "DU","Delhi University","BHU","Banaras Hindu University",
         "Tata","Tata Motors","Tata Consultancy Services","TCS",
-        "Infosys","Wipro","HCL","Tech Mahindra","LTI","Mindtree",
-        "Reliance","Reliance Industries","Jio","Airtel","Vodafone",
-        "Idea","BSNL","MTNL","Bharat Electronics","BEL","BHEL",
-        "ONGC","IOCL","BPCL","HPCL","GAIL","NTPC","Power Grid",
-        "Adani","Adani Group","Mahindra","Mahindra & Mahindra",
-        "Bajaj","Bajaj Auto","Maruti Suzuki","Hyundai","Toyota",
-        "Honda","Tata Steel","JSW Steel","SAIL","Hindalco",
-        "HDFC","HDFC Bank","ICICI","ICICI Bank","SBI","State Bank",
-        "Axis Bank","Kotak Mahindra","Yes Bank","PNB","Canara Bank",
-        "Bank of Baroda","Union Bank","Indian Bank","IDBI",
-        "LIC","IRDAI","SEBI","RBI","NSE","BSE","NSDL","CDSL",
+        "Tata Steel","Tata Power","Tata Communications","Tata Chemicals",
+        "Infosys","Wipro","HCL","HCL Technologies","Tech Mahindra",
+        "LTI","Mindtree","L&T","Larsen & Toubro","Larsen and Toubro",
+        "Reliance","Reliance Industries","Jio","Airtel","Bharti Airtel",
+        "Vodafone","Vodafone Idea","Idea","BSNL","MTNL",
+        "Bharat Electronics","BEL","BHEL","Bharat Heavy Electricals",
+        "ONGC","Oil and Natural Gas Corporation","IOCL","Indian Oil",
+        "BPCL","HPCL","GAIL","GAIL India","NTPC","Power Grid",
+        "Adani","Adani Group","Adani Enterprises","Adani Ports",
+        "Mahindra","Mahindra & Mahindra","Mahindra and Mahindra",
+        "Bajaj","Bajaj Auto","Bajaj Finserv","Bajaj Finance",
+        "Maruti Suzuki","Hyundai","Toyota","Honda","Honda Motors",
+        "JSW Steel","JSW","SAIL","Steel Authority of India","Hindalco",
+        "HDFC","HDFC Bank","HDFC Life","HDFC AMC",
+        "ICICI","ICICI Bank","ICICI Prudential","ICICI Lombard",
+        "SBI","State Bank","State Bank of India",
+        "Axis Bank","Kotak Mahindra","Kotak","Yes Bank",
+        "PNB","Punjab National Bank","Canara Bank","Bank of Baroda",
+        "Union Bank","Union Bank of India","Indian Bank","IDBI","IDBI Bank",
+        "LIC","Life Insurance Corporation","IRDAI","SEBI","RBI",
+        "Reserve Bank of India","NSE","BSE","NSDL","CDSL",
         "Google","Microsoft","Amazon","Flipkart","Myntra","Swiggy",
         "Zomato","Ola","Uber","Rapido","PhonePe","Paytm","Google Pay",
         "GPay","BHIM","CRED","PolicyBazaar","Urban Company",
-        "Nykaa","Meesho","BYJU'S","Unacademy","Vedantu",
-        "MakeMyTrip","IRCTC","RedBus","OYO","BookMyShow",
-        "Zee","Star Plus","Colors TV","Sony TV","Times Now",
-        "Times of India","Hindustan Times","The Hindu",
-        "Indian Railways","ISRO","DRDO","BARC","TIFR",
+        "Nykaa","Meesho","BYJU'S","Unacademy","Vedantu","UpGrad",
+        "MakeMyTrip","IRCTC","RedBus","OYO","OYO Rooms","BookMyShow",
+        "Zee","Zee TV","Star Plus","Star Sports","Colors TV",
+        "Sony TV","Sony LIV","Times Now","NDTV","CNN IBN",
+        "Times of India","Hindustan Times","The Hindu","Indian Express",
+        "Economic Times","Business Standard","Mint","Live Mint",
+        "Indian Railways","Railways","ISRO","DRDO","BARC","TIFR",
         "Supreme Court","High Court","Parliament","Rashtrapati Bhavan",
+        "Delhi Police","Mumbai Police","CBI","IB","RAW","NIA",
+        "IIT Bombay","IIT Delhi","IIT Kanpur","IIT Madras",
+        "Apollo","Apollo Hospitals","Fortis","Fortis Healthcare",
+        "Max Hospital","Medanta","Manipal Hospital","Narayana Health",
+    }
+
+    ORG_FP_KEYWORDS_EXTRA = {
+        "number","digit","figure","amount","value","code","word",
+        "letter","character","symbol","detail","info","information",
+        "data","document","file","form","page","section","column","row",
+        "type","kind","sort","category","class","group","set","list",
+        "series","sequence","order","rank","level","grade","rate",
+        "standard","quality","quantity","measure","unit","size",
+        "total","sum","net","gross","balance","limit","max","min",
+        "range","average","mean","median","mode","count","frequency",
+        "percentage","ratio","index","factor","parameter","variable",
+        "function","method","system","process","procedure","protocol",
+        "operation","action","task","job","role","position","post",
+        "status","state","condition","situation","circumstance",
+        "reason","cause","effect","result","outcome","impact",
+        "issue","problem","query","doubt","question","concern",
+        "solution","answer","response","reply","feedback","input",
+        "output","source","target","destination","origin","start",
+        "end","beginning","middle","edge","core","center","hub",
     }
 
     CASTE_RELIGION_TERMS = {
@@ -499,8 +540,15 @@ class PIIMask:
                 continue
             if self._spacy_span_near_pii(text, ent):
                 continue
-            if ent.label_ == "ORG" and ent.text.strip() in self.ORG_FP_KEYWORDS:
-                continue
+            if ent.label_ == "ORG":
+                ent_text = ent.text.strip()
+                if ent_text in self.ORG_FP_KEYWORDS:
+                    continue
+                ent_lower = ent_text.lower()
+                if ent_lower in self.ORG_FP_KEYWORDS_EXTRA:
+                    continue
+                if ent_lower in {w.lower() for w in self.NOT_PERSON_WORDS}:
+                    continue
             if ent.label_ in ("ORG", "PERSON") and self._is_known_city(ent.text):
                 continue
             if ent.label_ == "PERSON":
