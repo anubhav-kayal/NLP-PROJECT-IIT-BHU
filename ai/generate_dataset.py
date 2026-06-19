@@ -542,6 +542,33 @@ MIXED_PARAGRAPHS = [
     "Tax filing for {name} PAN {pan}. Aadhaar {aadhaar} linked. Refund to account {bank} IFSC {ifsc}. Contact {phone} and email {email}. Address {loc} pincode {pincode}. Previous year returns filed from this location. UPI {upi} used for tax payment.",
 ]
 
+CASTE_RELIGION_VALUES = [
+    "Brahmin", "Thakur", "Rajput", "Jat", "Gurjar", "Maratha", "Kunbi",
+    "Patidar", "Yadav", "Kurmi", "Koeri", "Khatri", "Arora", "Baniya",
+    "Vaishya", "Gupta", "Agarwal", "Jain", "Kayastha", "Bhumihar", "Tyagi",
+    "Saini", "Kashyap", "Maurya", "Nishad", "Dalit", "Adivasi",
+    "Muslim", "Hindu", "Sikh", "Christian", "Buddhist", "Parsi",
+    "OBC", "SC", "ST", "General", "EWS",
+]
+
+CASTE_RELIGION_CONTEXT = [
+    "I am a {cr} by caste",
+    "My caste is {cr}",
+    "He belongs to the {cr} community",
+    "She is from a {cr} family",
+    "They are {cr} by background",
+    "The {cr} community in this village",
+    "I am from the {cr} caste",
+    "She belongs to {cr} category",
+    "His family is {cr}",
+    "Our community is {cr}",
+    "The reservation is for {cr}",
+    "I belong to {cr}",
+    "She comes from a {cr} background",
+    "They are traditionally {cr}",
+    "The {cr} community celebrates this festival",
+]
+
 PII_TYPES = {
     "PERSON": lambda: random.choice(INDIAN_FIRST_NAMES) + " " + random.choice(INDIAN_LAST_NAMES),
     "AADHAAR": lambda: format_number(random.choice(AADHAAR_SEEDS), (4,4,4)),
@@ -554,6 +581,7 @@ PII_TYPES = {
     "PINCODE": lambda: str(random.choice(PINCODES)),
     "ORG": lambda: random.choice(ORGS),
     "GPE": lambda: random.choice(LOCATIONS),
+    "CASTE_RELIGION": lambda: random.choice(CASTE_RELIGION_VALUES),
 }
 
 def format_number(num, groups):
@@ -642,6 +670,9 @@ def make_english(pii, pii_val, label):
     elif label == "GPE":
         ctx = random.choice(LOCATION_CONTEXT)
         return ctx.format(loc=pii_val)
+    elif label == "CASTE_RELIGION":
+        ctx = random.choice(CASTE_RELIGION_CONTEXT)
+        return ctx.format(cr=pii_val)
     return templates.format(pii=pii.lower(), pii_val=pii_val)
 
 def make_english_double(items):
@@ -649,8 +680,8 @@ def make_english_double(items):
         return make_english(items[0][0], items[0][1], items[0][0])
     temp = random.choice(ENGLISH_TEMPLATES_DOUBLE)
     i1, i2 = items[0], items[1]
-    label_map1 = {"PERSON": "name", "AADHAAR": "Aadhaar", "PAN": "PAN", "PHONE": "phone", "UPI_ID": "UPI ID", "IFSC": "IFSC", "EMAIL": "email", "BANK_ACC": "bank account", "PINCODE": "pincode", "ORG": "organisation", "GPE": "location"}
-    label_map2 = {"PERSON": "name", "AADHAAR": "Aadhaar", "PAN": "PAN", "PHONE": "phone", "UPI_ID": "UPI ID", "IFSC": "IFSC", "EMAIL": "email", "BANK_ACC": "bank account", "PINCODE": "pincode", "ORG": "organisation", "GPE": "location"}
+    label_map1 = {"PERSON": "name", "AADHAAR": "Aadhaar", "PAN": "PAN", "PHONE": "phone", "UPI_ID": "UPI ID", "IFSC": "IFSC", "EMAIL": "email", "BANK_ACC": "bank account", "PINCODE": "pincode", "ORG": "organisation", "GPE": "location", "CASTE_RELIGION": "caste"}
+    label_map2 = {"PERSON": "name", "AADHAAR": "Aadhaar", "PAN": "PAN", "PHONE": "phone", "UPI_ID": "UPI ID", "IFSC": "IFSC", "EMAIL": "email", "BANK_ACC": "bank account", "PINCODE": "pincode", "ORG": "organisation", "GPE": "location", "CASTE_RELIGION": "caste"}
     text = temp.format(pii=label_map1.get(i1[0], "PII"), pii_val=i1[1], pii2=label_map2.get(i2[0], "PII"), pii_val2=i2[1])
     return text
 
@@ -687,6 +718,8 @@ def make_paragraph(items):
             mapped["org"] = val
         elif label == "GPE":
             mapped["loc"] = val
+        elif label == "CASTE_RELIGION":
+            mapped["caste"] = val
 
     T = MIXED_PARAGRAPHS
     indices = list(range(len(T)))
@@ -706,21 +739,22 @@ def generate_dataset(total=7000):
     
     # Define target distribution
     targets = {
-        "PERSON": 0.12,
-        "AADHAAR": 0.08,
-        "PAN": 0.08,
-        "PHONE": 0.10,
-        "UPI_ID": 0.07,
-        "IFSC": 0.06,
-        "EMAIL": 0.07,
-        "BANK_ACC": 0.06,
+        "PERSON": 0.11,
+        "AADHAAR": 0.07,
+        "PAN": 0.07,
+        "PHONE": 0.09,
+        "UPI_ID": 0.06,
+        "IFSC": 0.05,
+        "EMAIL": 0.06,
+        "BANK_ACC": 0.05,
         "PINCODE": 0.04,
         "ORG": 0.05,
         "GPE": 0.05,
+        "CASTE_RELIGION": 0.04,
         "hinglish_single": 0.06,
-        "english_double": 0.05,
-        "paragraph": 0.05,
-        "no_pii": 0.06,
+        "english_double": 0.06,
+        "paragraph": 0.06,
+        "no_pii": 0.04,
     }
 
     for i in range(total):
@@ -782,21 +816,26 @@ def generate_dataset(total=7000):
             label = "GPE"
             text = make_english("location", val, "GPE")
             expected = [label]
+        elif r < (cumulative := cumulative + targets["CASTE_RELIGION"]):
+            val = PII_TYPES["CASTE_RELIGION"]()
+            label = "CASTE_RELIGION"
+            text = make_english("caste", val, "CASTE_RELIGION")
+            expected = [label]
         elif r < (cumulative := cumulative + targets["hinglish_single"]):
-            ptype = random.choice(["PERSON", "PHONE", "UPI_ID", "AADHAAR", "PAN"])
+            ptype = random.choice(["PERSON", "PHONE", "UPI_ID", "AADHAAR", "PAN", "CASTE_RELIGION"])
             val = PII_TYPES[ptype]()
             label = ptype
             text = make_hinglish(ptype, val, ptype)
             expected = [label]
         elif r < (cumulative := cumulative + targets["english_double"]):
-            types = random.sample(["PERSON", "PHONE", "UPI_ID", "EMAIL", "AADHAAR", "PAN", "IFSC", "BANK_ACC", "PINCODE"], 2)
+            types = random.sample(["PERSON", "PHONE", "UPI_ID", "EMAIL", "AADHAAR", "PAN", "IFSC", "BANK_ACC", "PINCODE", "CASTE_RELIGION"], 2)
             items = []
             for t in types:
                 items.append((t, PII_TYPES[t]()))
             text = make_english_double(items)
             expected = [t for t, v in items]
         elif r < (cumulative := cumulative + targets["paragraph"]):
-            types = random.sample(["PERSON", "AADHAAR", "PAN", "PHONE", "EMAIL", "UPI_ID", "IFSC", "BANK_ACC", "PINCODE", "ORG", "GPE"], random.randint(5, 8))
+            types = random.sample(["PERSON", "AADHAAR", "PAN", "PHONE", "EMAIL", "UPI_ID", "IFSC", "BANK_ACC", "PINCODE", "ORG", "GPE", "CASTE_RELIGION"], random.randint(5, 8))
             items = []
             for t in types:
                 items.append((t, PII_TYPES[t]()))
