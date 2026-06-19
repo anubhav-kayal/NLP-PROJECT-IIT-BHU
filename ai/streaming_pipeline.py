@@ -6,6 +6,8 @@ import pyaudio
 from pii_mask import PIIMask
 from transcriber import LocalTranscriber
 from diarization import SpeakerDiarizer, WordSpeaker
+from whitelist import Whitelist
+from audit_log import AuditLog
 
 SAMPLE_RATE = 16000
 CHANNELS = 1
@@ -104,14 +106,15 @@ class RollingBuffer:
 
 
 class StreamingPipeline:
-    def __init__(self, use_blackhole=False, blackhole_device_id=None):
+    def __init__(self, use_blackhole=False, blackhole_device_id=None,
+                 context_mode="all", whitelist=None, audit=None, consent=False):
         print("=" * 60)
         print("  STREAMING PRIVACY PIPELINE")
         print("  Loading models...")
         print("=" * 60)
 
         print("\n1. Loading PII Filter (spaCy + Indian rules)...")
-        self.pii = PIIMask()
+        self.pii = PIIMask(context_mode=context_mode)
 
         print("\n2. Loading Whisper (small)...")
         self.transcriber = LocalTranscriber(model_size="small")
@@ -130,8 +133,20 @@ class StreamingPipeline:
         self.recording = False
         self.processing = False
 
+        self.whitelist = whitelist or Whitelist()
+        self.audit = audit or AuditLog(enabled=False)
+        self.consent_mode = consent
+        self.consent_granted = True
+        self.consent_lock = threading.Lock()
+
         self.session_stats = {"total": 0, "redacted": 0, "pii_counts": {}}
         print("\n  System ready.\n")
+
+    def _toggle_consent(self):
+        with self.consent_lock:
+            self.consent_granted = not self.consent_granted
+        status = "ACTIVE" if self.consent_granted else "PAUSED"
+        print(f"\n  >>> Redaction {'RESUMED' if self.consent_granted else 'PAUSED'} <<<")
 
     def _list_blackhole_devices(self):
         blackhole_devices = []
@@ -195,6 +210,8 @@ class StreamingPipeline:
 
         redacted_text, spans = self.pii.analyze(text)
 
+        spans = [s for s in spans if not self.whitelist.contains_any(s.text)]
+
         if spans:
             redacted_audio = self.redactor.redact_audio(
                 audio_samples.astype(np.float64), word_timestamps, spans
@@ -246,6 +263,8 @@ class StreamingPipeline:
         print("  Processing in {}-second windows every {:.1f}s".format(WINDOW_SECONDS, HOP_SECONDS))
         if self.use_blackhole:
             print("  Output routed to BlackHole (select in Zoom/Meet settings).")
+        if self.consent_mode:
+            print("  Consent mode: redaction is ACTIVE. Press 'c' then ENTER to toggle.")
         print("  Press Ctrl+C to stop.\n")
 
         try:
@@ -256,6 +275,15 @@ class StreamingPipeline:
                 if current_count == last_window_count:
                     continue
                 last_window_count = current_count
+
+                if self.consent_mode:
+                    with self.consent_lock:
+                        grant = self.consent_granted
+                    if not grant:
+                        raw_samples = self.buffer.get_window(WINDOW_SECONDS)
+                        if raw_samples is not None:
+                            self.output_stream.write(raw_samples.tobytes())
+                        continue
 
                 audio_samples = self.buffer.get_window(WINDOW_SECONDS)
                 if audio_samples is None:
@@ -275,6 +303,14 @@ class StreamingPipeline:
                 words_with_speakers = result.get("words_with_speakers", [])
 
                 speaker_text = self._format_speaker_output(words_with_speakers)
+
+                self.audit.log_event(
+                    original_text=text,
+                    redacted_text=redacted,
+                    spans=spans,
+                    speaker_info=speaker_text[:100],
+                )
+
                 print(f"\n  Heard:    {text[:100]}")
                 print(f"  Speakers: {speaker_text[:100]}")
                 print(f"  Redacted: {redacted[:100]}")
@@ -295,6 +331,7 @@ class StreamingPipeline:
             print("\n  Stopping...")
         finally:
             self.recording = False
+            self.audit.flush()
             if self.input_stream:
                 self.input_stream.stop_stream()
                 self.input_stream.close()
