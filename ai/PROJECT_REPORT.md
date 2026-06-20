@@ -236,9 +236,121 @@ Microphone → Whisper (Local STT) → PII Mask (spaCy + Regex) → Redacted Aud
 ## Known Limitations
 
 | Issue | Root Cause | Status |
-|---|---|---|
+|---|---|---|---|
 | **BANK_ACC recall=0.763** | 152 remaining FNs are 12-digit numbers without banking context keywords | Acceptable — widening further would trade off AADHAAR accuracy |
 | **GPE precision=0.759** | 178 FPs are mostly cities in no-PII dataset samples; correct behavior in real use | Dataset artifact |
+
+---
+
+## Changes Made (Week 5 — Jun 20, 2026: Phase 3 Completion + Phase 4 Dashboard)
+
+### 20. Post-Call MP3/WAV File Redaction
+**New file:** `ai/file_redactor.py`
+- `FileRedactor` class — transcribes any audio file (WAV/MP3/M4A/OGG/FLAC), runs PII detection, generates redacted audio + JSON report + redacted transcript
+- Auto-converts non-WAV formats to WAV via pydub (optional, falls back gracefully)
+- Uses existing `AudioRedactor` from streaming pipeline for noise-based audio redaction
+- CLI: `python main_system.py --redact recording.wav`
+- Batch support via `batch_redact()` method for multiple files
+
+### 21. Transcript Integration (Zoom/Meet Exports)
+**New file:** `ai/transcript_processor.py`
+- `TranscriptProcessor` class — parses Zoom VTT format and plain-text speaker transcripts
+- Detects speaker names from VTT cue labels and plain-text colon-separated patterns
+- Per-segment PII analysis with speaker tracking
+- Outputs redacted TXT, VTT, and JSON formats
+- CLI: `python main_system.py --redact-transcript meeting.vtt`
+
+### 22. PDF Export of Redacted Transcripts
+**New file:** `ai/pdf_exporter.py`
+- `PDFExporter` class — generates PDFs with original + redacted transcripts side-by-side
+- Redacted spans rendered as black filled boxes with `[LABEL_REDACTED]` tags
+- Report-style PDF with metadata (duration, word count, PII summary)
+- Uses fpdf2 (lightweight, no LaTeX/Chrome needed)
+
+### 23. Batch Processing and Redaction Reports
+**New file:** `ai/batch_processor.py`
+- `BatchProcessor` — processes entire directories of audio + transcript files
+- Generates aggregate JSON report + interactive HTML report with:
+  - Summary statistics (success/failure counts, total PII detected)
+  - Per-file results table
+  - PII distribution by category
+  - Error log for failed files
+- CLI: `python main_system.py --batch-dir ./recordings/`
+
+### 24. Flask Localhost Dashboard
+**New file:** `ai/dashboard.py`
+- Full-featured web dashboard at `http://127.0.0.1:5000`
+- Six tabbed sections:
+  - **Overview** — live stats (sessions, PII events, whitelist count), recent redaction events feed, PII category distribution table (auto-refreshes every 5s)
+  - **Redact File** — drag-and-drop file upload for audio redaction with context mode and export format selectors, displays original + redacted text, download links for WAV/TXT/JSON/PDF outputs
+  - **Transcript** — text area and file upload for transcript redaction with same outputs
+  - **History** — full audit log viewer with timestamps, PII types, speaker info
+  - **Whitelist** — add/remove whitelist terms with live table
+  - **Settings** — PII category toggle switches, sensitivity slider (0.5–1.0), system status panel
+- REST API endpoints: `/api/stats`, `/api/redact`, `/api/redact-transcript`, `/api/whitelist`, `/api/history`, `/api/settings`
+- CLI: `python main_system.py --dashboard` or `python dashboard.py`
+
+### 25. One-Command Installer
+**New file:** `ai/install.sh`
+- Detects OS (macOS/Linux), checks Python 3
+- Creates `.venv`, installs system deps (portaudio, ffmpeg, BlackHole via Homebrew on macOS; apt-get on Linux)
+- Installs pip dependencies from `requirements.txt` + optional extras (flask, fpdf2, pydub)
+- Downloads spaCy model
+- Prints usage instructions for all modes
+
+### 26. Fixed Choppy Audio — Streaming Pipeline Rewrite
+**File:** `ai/streaming_pipeline.py` (rewritten)
+
+**Root cause:** The original pipeline blocked the main thread during Whisper transcription (3-5s) with no output → audible silence/stutter bursts. The `RollingBuffer` had alignment issues with overlapping windows.
+
+**Fixes applied:**
+
+**a) Continuous output thread (gapless playback)**
+- Added `_output_loop()` running in a separate daemon thread
+- Continuously reads from the rolling buffer with a configurable lag (`--output-lag 0.3` = 300ms behind live)
+- Always writes audio to the output device — raw passthrough by default
+- No more silent gaps during processing
+
+**b) Async redaction overlay**
+- Processing happens in the main thread on a sliding window (every HOP_SECONDS)
+- Redacted audio segments are stored in `self.redacted_segments` keyed by absolute sample range
+- The output thread checks for overlapping redacted segments and splices them into the stream
+- Redacted segments are consumed and removed once their sample range has passed the write head
+
+**c) Fixed RollingBuffer — sample-level positioning**
+- Rewrote `read_samples(start, count)` to use absolute sample positions
+- Added `get_window_at(pos)` for precise window capture at any position
+- Buffer now correctly handles wrap-around with proper logical-to-physical mapping
+- Processing windows are taken at aligned sample positions, not at arbitrary offsets
+
+**d) Configurable parameters**
+- `--output-lag SECONDS`: Tradeoff between latency and smoothness (default: 0.3s)
+- `--buffer-seconds SECONDS`: Ring buffer duration (default: 10s)
+- `--backend pyaudio|sounddevice`: Choose audio backend
+
+**e) Buffer underrun handling**
+- Recording loop catches `OSError` from PyAudio and fills with silence instead of crashing
+- Output loop catches write errors and retries
+
+### 27. Added sounddevice Audio Backend
+**File:** `ai/streaming_pipeline.py`, `ai/microphone_input.py`
+- Added `_record_loop_sounddevice()` — uses `sounddevice.InputStream` with callback for lower-latency capture on macOS/Linux
+- Added `_output_loop_sounddevice()` — uses `sounddevice.OutputStream` with callback for lower-latency playback
+- `SoundDeviceRecorder` class in `microphone_input.py` for standalone use
+- PyAudio remains the default for BlackHole/Windows compatibility
+
+### 28. Improved microphone_input.py
+**File:** `ai/microphone_input.py`
+- Added callback-based PyAudio capture (`use_callback=True`) — non-blocking, lower latency
+- Added `SoundDeviceRecorder` class — alternative backend using `sounddevice`
+- Buffer underrun handling with silent-frame fallback
+
+### 29. Updated CLI Integration
+**File:** `ai/main_system.py`
+- Added `--redact <file>` for post-call file redaction
+- Added `--redact-transcript <file>` for transcript redaction
+- Added `--batch-dir <dir>` for batch processing
+- Added `--dashboard` and `--dashboard-port` for web dashboard
 
 ---
 
@@ -254,24 +366,24 @@ Microphone → Whisper (Local STT) → PII Mask (spaCy + Regex) → Redacted Aud
 - [ ] 500+ annotated Indian sentences training set
 - [x] F1 > 0.85 per category (12/13 categories achieved)
 
-### Phase 3: Product Features
+### Phase 3: Product Features (Week 5)
 - [x] Context-aware redaction (public vs personal disclosures)
 - [x] Whitelist mechanism (bypass redaction for known contacts)
 - [x] Consent mode (pause redaction on demand)
 - [x] Encrypted local audit log
-- [ ] Post-call MP3/WAV file redaction
-- [ ] Transcript integration (Zoom/Meet exports)
-- [ ] PDF export of redacted transcripts
-- [ ] Batch processing and redaction reports
+- [x] Post-call MP3/WAV file redaction
+- [x] Transcript integration (Zoom/Meet exports)
+- [x] PDF export of redacted transcripts
+- [x] Batch processing and redaction reports
 
-### Phase 4: Dashboard & Packaging
-- [ ] Flask/FastAPI localhost dashboard
-- [ ] PII category toggle controls
-- [ ] Live redaction event feed
-- [ ] Session history review
-- [ ] Whitelist/blacklist management UI
-- [ ] Sensitivity slider
-- [ ] One-command install (macOS/Linux)
+### Phase 4: Dashboard & Packaging (Week 5)
+- [x] Flask localhost dashboard
+- [x] PII category toggle controls
+- [x] Live redaction event feed (from audit log)
+- [x] Session history review
+- [x] Whitelist/blacklist management UI
+- [x] Sensitivity slider
+- [x] One-command install (macOS/Linux)
 - [ ] PyInstaller standalone desktop app
 - [ ] Raspberry Pi 5 USB audio dongle port
 
@@ -280,13 +392,19 @@ Microphone → Whisper (Local STT) → PII Mask (spaCy + Regex) → Redacted Aud
 ## Files Changed
 
 | File | Status | Purpose |
-|---|---|---|
+|---|---|---|---|
 | `ai/pii_mask.py` | Modified | ORG dict expansion, BANK_ACC context fix, CASTE_RELIGION detection, PERSON recall fix, context-aware redaction, context_mode parameter |
 | `ai/generate_dataset.py` | Modified | Added CASTE_RELIGION samples to 7000 dataset |
 | `ai/whitelist.py` | **New** | Whitelist mechanism (JSON persistent) |
 | `ai/audit_log.py` | **New** | Encrypted audit log (Fernet) |
-| `ai/main_system.py` | Modified | Integrated all 4 Phase 3 features; added CLI args |
+| `ai/main_system.py` | Modified | Integrated all Phase 3 + 4 features; added CLI args for redact, batch, dashboard |
 | `ai/streaming_pipeline.py` | Modified | Integrated whitelist, audit, consent mode |
-| `ai/requirements.txt` | Modified | Added cryptography |
+| `ai/requirements.txt` | Modified | Added cryptography, flask, fpdf2, pydub, soundfile |
+| `ai/file_redactor.py` | **New** | Post-call MP3/WAV file redaction with noise-based audio masking |
+| `ai/transcript_processor.py` | **New** | Zoom VTT and plain-text transcript parsing + redaction |
+| `ai/pdf_exporter.py` | **New** | PDF export of redacted transcripts and reports |
+| `ai/batch_processor.py` | **New** | Batch directory processing + aggregate JSON/HTML reports |
+| `ai/dashboard.py` | **New** | Flask web dashboard with live feed, file upload, settings |
+| `ai/install.sh` | **New** | One-command installer (macOS/Linux) |
 | `ai/benchmark_7000_results.json` | Modified | Updated benchmark metrics |
 | `ai/benchmark_7000_errors.json` | Modified | Updated error log |
