@@ -246,6 +246,27 @@ if __name__ == "__main__":
                         help="Remove a term from the whitelist")
     parser.add_argument("--whitelist-list", action="store_true",
                         help="List all whitelisted terms")
+    parser.add_argument("--redact", type=str, default=None,
+                        help="Redact PII from an audio file (WAV/MP3)")
+    parser.add_argument("--redact-transcript", type=str, default=None,
+                        help="Redact PII from a transcript file (VTT/TXT)")
+    parser.add_argument("--batch-dir", type=str, default=None,
+                        help="Batch process all audio/transcript files in a directory")
+    parser.add_argument("--dashboard", action="store_true",
+                        help="Start the localhost web dashboard")
+    parser.add_argument("--dashboard-port", type=int, default=5000,
+                        help="Dashboard port (default: 5000)")
+    parser.add_argument("--backend", choices=["pyaudio", "sounddevice"], default="pyaudio",
+                        help="Audio capture backend (default: pyaudio)")
+    parser.add_argument("--output-lag", type=float, default=0.3,
+                        help="Output lag in seconds (default: 0.3, lower = less latency)")
+    parser.add_argument("--buffer-seconds", type=float, default=10.0,
+                        help="Ring buffer size in seconds (default: 10.0)")
+    parser.add_argument("--echo-cancel", action="store_true",
+                        help="Enable acoustic echo cancellation (NLMS adaptive filter)")
+    parser.add_argument("--model-size", choices=["tiny", "base", "small", "medium", "large"],
+                        default="base",
+                        help="Whisper model size (default: base, faster than small for streaming)")
     args = parser.parse_args()
 
     if args.view_audit:
@@ -271,6 +292,43 @@ if __name__ == "__main__":
             print("  Whitelist is empty.")
         sys.exit(0)
 
+    if args.redact:
+        from file_redactor import FileRedactor
+        redactor = FileRedactor()
+        result = redactor.redact_file(args.redact, context_mode=args.context_mode)
+        print(f"\n  Original: {result['original_text']}")
+        print(f"  Redacted: {result['redacted_text']}")
+        print(f"  PII found: {result['pii_count']}")
+        print(f"  Outputs: {result['output_wav']}, {result['output_json']}, {result['output_txt']}")
+        sys.exit(0)
+
+    if args.redact_transcript:
+        from transcript_processor import TranscriptProcessor
+        processor = TranscriptProcessor()
+        result = processor.process_transcript(args.redact_transcript, context_mode=args.context_mode)
+        print(f"\n  Original: {result['original_text'][:200]}")
+        print(f"  Redacted: {result['redacted_text'][:200]}")
+        print(f"  PII found: {result['pii_count']}")
+        print(f"  Outputs: {result['output_json']}, {result['output_txt']}, {result['output_vtt']}")
+        sys.exit(0)
+
+    if args.batch_dir:
+        from batch_processor import BatchProcessor
+        processor = BatchProcessor()
+        report = processor.process_directory(args.batch_dir, context_mode=args.context_mode)
+        s = report["summary"]
+        print(f"\n  Batch Summary:")
+        print(f"    Audio: {s['audio_success']}/{s['audio_files']} OK")
+        print(f"    Transcripts: {s['transcript_success']}/{s['transcript_files']} OK")
+        print(f"    Total PII detected: {s['total_pii_detected']}")
+        sys.exit(0)
+
+    if args.dashboard:
+        from dashboard import DashboardServer
+        server = DashboardServer(port=args.dashboard_port)
+        server.start()
+        sys.exit(0)
+
     audit = AuditLog(enabled=args.audit)
 
     if args.fixed:
@@ -289,6 +347,11 @@ if __name__ == "__main__":
             whitelist=wl,
             audit=audit,
             consent=args.consent,
+            backend=args.backend,
+            output_lag=args.output_lag,
+            buffer_seconds=args.buffer_seconds,
+            echo_cancel=args.echo_cancel,
+            model_size=args.model_size,
         )
         pipeline.run()
 
