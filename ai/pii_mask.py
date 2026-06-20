@@ -419,21 +419,74 @@ class PIIMask:
             return "personal"
         return "personal"
 
+    @staticmethod
+    def _is_upper_or_digit(c: str) -> bool:
+        return c.isupper() or c.isdigit()
+
+    def _collapse_digit_spaces(self, text: str):
+        """Remove spaces between consecutive uppercase letters or digits for regex matching.
+        Handles spaced-out PAN (A B C D E 1 2 3 4 F) and phone/Aadhaar digits.
+        Returns (collapsed_text, char_map) where char_map[i] = original_position.
+        """
+        collapsed = []
+        char_map = []
+        i = 0
+        while i < len(text):
+            c = text[i]
+            if c == ' ' and i > 0 and i < len(text) - 1:
+                if self._is_upper_or_digit(text[i-1]) and self._is_upper_or_digit(text[i+1]):
+                    i += 1
+                    continue
+            collapsed.append(c)
+            char_map.append(i)
+            i += 1
+        return ''.join(collapsed), char_map
+
+    def _skip_rule_match(self, text, match_text, match_start, label):
+        if label == "BANK_ACC":
+            if len(match_text) < 11:
+                return True
+            phone_pat = self.INDIAN_PII_PATTERNS["PHONE"]
+            if re.fullmatch(phone_pat, match_text):
+                return True
+        if label == "AADHAAR":
+            if match_start > 0 and text[match_start - 1] == "+":
+                return True
+            context = self._context_around(text, match_start)
+            has_aadhaar_kw = any(kw in context for kw in self.AADHAAR_KEYWORDS)
+            has_bank_kw = any(kw in context for kw in self.BANK_ACC_KEYWORDS)
+            if has_bank_kw and not has_aadhaar_kw:
+                return True
+            matched_digits = re.sub(r"\s+", "", match_text)
+            if len(matched_digits) == 12 and not has_aadhaar_kw and not has_bank_kw:
+                wide_context = self._context_around_wide(text, match_start)
+                has_aadhaar_kw_wide = any(kw in wide_context for kw in self.AADHAAR_KEYWORDS)
+                has_bank_kw_wide = any(kw in wide_context for kw in self.BANK_ACC_KEYWORDS)
+                if has_bank_kw_wide and not has_aadhaar_kw_wide:
+                    return True
+        return False
+
     def _rule_based_spans(self, text: str) -> List[RedactedSpan]:
+        collapsed, char_map = self._collapse_digit_spaces(text)
         spans = []
         for label, pattern in self.INDIAN_PII_PATTERNS.items():
-            for match in re.finditer(pattern, text):
-                if self._skip_rule_match(text, match, label):
+            for match in re.finditer(pattern, collapsed):
+                orig_start = char_map[match.start()]
+                orig_end = char_map[match.end() - 1] + 1
+                orig_text = text[orig_start:orig_end]
+                if self._skip_rule_match(text, orig_text, orig_start, label):
                     continue
                 spans.append(RedactedSpan(
-                    start=match.start(), end=match.end(),
-                    text=match.group(), label=label, confidence=1.0
+                    start=orig_start, end=orig_end,
+                    text=orig_text, label=label, confidence=1.0
                 ))
         for label, pattern in self.INDIAN_PII_PATTERNS_HINDI.items():
-            for match in re.finditer(pattern, text):
+            for match in re.finditer(pattern, collapsed):
+                orig_start = char_map[match.start()]
+                orig_end = char_map[match.end() - 1] + 1
                 spans.append(RedactedSpan(
-                    start=match.start(), end=match.end(),
-                    text=match.group(), label=label, confidence=1.0
+                    start=orig_start, end=orig_end,
+                    text=text[orig_start:orig_end], label=label, confidence=1.0
                 ))
         return spans
 
@@ -448,31 +501,6 @@ class PIIMask:
         end = min(len(text), pos + window)
         around = text[start:end].lower()
         return around
-
-    def _skip_rule_match(self, text, match, label):
-        if label == "BANK_ACC":
-            matched = match.group()
-            if len(matched) < 11:
-                return True
-            phone_pat = self.INDIAN_PII_PATTERNS["PHONE"]
-            if re.fullmatch(phone_pat, matched):
-                return True
-        if label == "AADHAAR":
-            if match.start() > 0 and text[match.start() - 1] == "+":
-                return True
-            context = self._context_around(text, match.start())
-            has_aadhaar_kw = any(kw in context for kw in self.AADHAAR_KEYWORDS)
-            has_bank_kw = any(kw in context for kw in self.BANK_ACC_KEYWORDS)
-            if has_bank_kw and not has_aadhaar_kw:
-                return True
-            matched_digits = re.sub(r"\s+", "", match.group())
-            if len(matched_digits) == 12 and not has_aadhaar_kw and not has_bank_kw:
-                wide_context = self._context_around_wide(text, match.start())
-                has_aadhaar_kw_wide = any(kw in wide_context for kw in self.AADHAAR_KEYWORDS)
-                has_bank_kw_wide = any(kw in wide_context for kw in self.BANK_ACC_KEYWORDS)
-                if has_bank_kw_wide and not has_aadhaar_kw_wide:
-                    return True
-        return False
 
     def _dictionary_spans(self, text: str) -> List[RedactedSpan]:
         spans = []
