@@ -1,13 +1,19 @@
-import struct
 import time
 import threading
+import os
+import tempfile
+import wave
 import numpy as np
 import pyaudio
+import queue
+from typing import Optional
+from collections import deque
 from pii_mask import PIIMask
 from transcriber import LocalTranscriber
-from diarization import SpeakerDiarizer, WordSpeaker
+from diarization import SpeakerDiarizer
 from whitelist import Whitelist
 from audit_log import AuditLog
+from echo_canceller import AcousticEchoCanceller
 
 SAMPLE_RATE = 16000
 CHANNELS = 1
@@ -16,21 +22,25 @@ SAMPLE_WIDTH = 2
 CHUNK = 1024
 WINDOW_SECONDS = 3
 HOP_SECONDS = 1.5
+BUFFER_SECONDS = 10
+OUTPUT_CHUNK_MS = 20
+
+CHUNK_OUTPUT = int(SAMPLE_RATE * OUTPUT_CHUNK_MS / 1000)
+
+
 class AudioRedactor:
     def __init__(self, sample_rate=SAMPLE_RATE):
         self.sample_rate = sample_rate
-        self._rng = np.random.default_rng(42)
 
-    def _noise(self, num_samples, rms_target, fade_samples):
-        noise = self._rng.normal(0, 1, num_samples).astype(np.float64)
-        current_rms = np.sqrt(np.mean(noise ** 2))
-        if current_rms > 0:
-            noise *= rms_target / current_rms
-        fade = min(fade_samples, num_samples // 2)
+    def _beep(self, num_samples: int, beep_freq: float = 880.0):
+        t = np.arange(num_samples, dtype=np.float64) / self.sample_rate
+        tone = np.sin(2 * np.pi * beep_freq * t) + 0.5 * np.sin(2 * np.pi * beep_freq * 1.5 * t)
+        tone /= np.max(np.abs(tone))
+        fade = min(int(0.005 * self.sample_rate), num_samples // 4)
         if fade > 0:
-            noise[:fade] *= np.linspace(0, 1, fade)
-            noise[-fade:] *= np.linspace(1, 0, fade)
-        return noise
+            tone[:fade] *= np.linspace(0, 1, fade)
+            tone[-fade:] *= np.linspace(1, 0, fade)
+        return tone * 0.85
 
     def _span_word_set(self, pii_spans):
         spans_by_word = {}
@@ -52,16 +62,13 @@ class AudioRedactor:
             clean = w["word"].lower().strip(".,!?'\"")
             if clean not in span_map:
                 continue
-            span = span_map[clean]
             ss = int(round(w["start"] * self.sample_rate))
             se = int(round(w["end"] * self.sample_rate))
             se = min(se, len(redacted))
-
-            segment = redacted[ss:se]
-            rms = max(np.sqrt(np.mean(segment ** 2)), 1e-6)
-            dur = (se - ss) / self.sample_rate
-            n = self._noise(se - ss, rms, max(64, int(0.004 * self.sample_rate)))[:se - ss]
-            redacted[ss:se] = n
+            if se - ss < 4:
+                continue
+            beep = self._beep(se - ss)
+            redacted[ss:se] = beep[:se - ss]
 
         max_val = np.max(np.abs(redacted))
         if max_val > 1.0:
