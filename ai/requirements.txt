@@ -4,4 +4,9 @@ spacy
 numpy
 pyannote.audio
 cryptography
+flask
+fpdf2
+pydub
+soundfile
+sounddevice
  
