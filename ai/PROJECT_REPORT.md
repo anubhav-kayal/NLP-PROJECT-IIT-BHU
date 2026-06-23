@@ -385,7 +385,8 @@ Microphone → Whisper (Local STT) → PII Mask (spaCy + Regex) → Redacted Aud
 - [x] Sensitivity slider
 - [x] One-command install (macOS/Linux)
 - [ ] PyInstaller standalone desktop app
-- [ ] Raspberry Pi 5 USB audio dongle port
+- [ ] Desktop app (PyInstaller bundle + native wrapper, no terminal required)
+- [ ] Language translator (real-time translation of redacted speech)
 
 ---
 
