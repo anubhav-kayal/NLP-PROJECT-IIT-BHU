@@ -19,16 +19,20 @@ NLP-PROJECT-IIT-BHU/
 │   ├── pii_mask.py              # spaCy NER + rule-based Indian PII detection
 │   ├── streaming_pipeline.py    # Sliding-window streaming pipeline with BlackHole
 │   ├── diarization.py           # Speaker diarization (pyannote)
+│   ├── file_redactor.py         # Post-call WAV/MP3 file redaction
+│   ├── transcript_processor.py  # Zoom/Meet VTT transcript parsing
+│   ├── pdf_exporter.py          # PDF export of redacted transcripts
+│   ├── batch_processor.py       # Directory-level batch processing
+│   ├── dashboard.py             # Flask web dashboard
+│   ├── echo_canceller.py        # NLMS acoustic echo cancellation
+│   ├── whitelist.py             # Persistent whitelist mechanism
+│   ├── audit_log.py             # Encrypted audit log (Fernet)
 │   ├── benchmark.py             # Original 40-sample mini benchmark
 │   ├── benchmark_7000.py        # 7000-sample benchmark pipeline
 │   ├── generate_dataset.py      # 7000-sample Indian-context test data generator
 │   ├── requirements.txt         # Python dependencies
 │   ├── README.md                # AI module documentation
 │   └── PROJECT_REPORT.md        # Detailed project report & benchmark results
-│
-├── hardware/
-│   ├── esp32_starter.cpp        # ESP32 microcontroller starter code
-│   └── README.md                # Hardware module documentation
 │
 ├── .gitignore
 └── README.md
@@ -181,16 +185,12 @@ python generate_dataset.py
 
 ## Future Scope
 
-- Speaker diarization
-- Streaming transcription
-- Edge AI deployment
-- Low-latency inference
-- Real-time analytics dashboard
-- Multilingual speech processing
-- Context-aware redaction
-- Encrypted local audit log
-- Flask/FastAPI dashboard
-- One-command installer
+- Desktop app (PyInstaller bundle + system tray icon, no terminal required)
+- Language translator (real-time translation of redacted speech)
+- Low-latency inference optimization
+- Multilingual speech processing (beyond English/Hindi)
+- 500+ annotated Indian sentences training set for fine-tuning
+- Auto-updater (Sparkle on macOS, Squirrel on Windows)
 
 ---
 
