@@ -197,7 +197,7 @@ python generate_dataset.py
 ## Contributors
 
 - Anubhav Kayal
-- IIT BHU NLP Project Team
+- Reshal Agarwal
 
 ---
 
