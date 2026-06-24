@@ -1,124 +1,124 @@
 {
   "dataset": {
-    "size": 7000
+    "size": 7500
   },
   "overall": {
-    "avg_inference_ms": 2.5,
-    "precision": 0.9503,
-    "recall": 0.9492,
-    "f1": 0.9497,
-    "true_positives": 8438,
-    "false_positives": 441,
-    "false_negatives": 452
+    "avg_inference_ms": 6.54,
+    "precision": 0.9499,
+    "recall": 0.8714,
+    "f1": 0.9089,
+    "true_positives": 8413,
+    "false_positives": 444,
+    "false_negatives": 1242
   },
   "per_category": {
     "ORG": {
-      "precision": 0.8937,
-      "recall": 0.8658,
-      "f1": 0.8796,
-      "samples": 544,
-      "tp": 471,
-      "fp": 56,
-      "fn": 73
+      "precision": 0.8164,
+      "recall": 0.7572,
+      "f1": 0.7857,
+      "samples": 593,
+      "tp": 449,
+      "fp": 101,
+      "fn": 144
     },
     "PAN": {
       "precision": 1.0,
-      "recall": 1.0,
-      "f1": 1.0,
-      "samples": 851,
-      "tp": 851,
+      "recall": 0.8763,
+      "f1": 0.9341,
+      "samples": 857,
+      "tp": 751,
       "fp": 0,
-      "fn": 0
+      "fn": 106
     },
     "PINCODE": {
       "precision": 1.0,
-      "recall": 1.0,
-      "f1": 1.0,
-      "samples": 587,
-      "tp": 587,
+      "recall": 0.7532,
+      "f1": 0.8593,
+      "samples": 616,
+      "tp": 464,
       "fp": 0,
-      "fn": 0
+      "fn": 152
     },
     "IFSC": {
       "precision": 1.0,
-      "recall": 1.0,
-      "f1": 1.0,
-      "samples": 653,
-      "tp": 653,
+      "recall": 0.7596,
+      "f1": 0.8634,
+      "samples": 732,
+      "tp": 556,
       "fp": 0,
-      "fn": 0
+      "fn": 176
     },
     "UPI_ID": {
       "precision": 1.0,
       "recall": 1.0,
       "f1": 1.0,
-      "samples": 784,
-      "tp": 784,
+      "samples": 895,
+      "tp": 895,
       "fp": 0,
-      "fn": 0
-    },
-    "BANK_ACC": {
-      "precision": 1.0,
-      "recall": 0.7629,
-      "f1": 0.8655,
-      "samples": 641,
-      "tp": 489,
-      "fp": 0,
-      "fn": 152
-    },
-    "PHONE": {
-      "precision": 0.995,
-      "recall": 1.0,
-      "f1": 0.9975,
-      "samples": 1001,
-      "tp": 1001,
-      "fp": 5,
       "fn": 0
     },
     "CASTE_RELIGION": {
-      "precision": 0.9149,
-      "recall": 0.8574,
-      "f1": 0.8852,
-      "samples": 589,
-      "tp": 505,
-      "fp": 47,
-      "fn": 84
+      "precision": 0.9882,
+      "recall": 0.747,
+      "f1": 0.8508,
+      "samples": 672,
+      "tp": 502,
+      "fp": 6,
+      "fn": 170
     },
     "EMAIL": {
       "precision": 1.0,
       "recall": 1.0,
       "f1": 1.0,
-      "samples": 692,
-      "tp": 692,
+      "samples": 769,
+      "tp": 769,
       "fp": 0,
       "fn": 0
     },
-    "GPE": {
-      "precision": 0.7587,
-      "recall": 0.9697,
-      "f1": 0.8513,
-      "samples": 561,
-      "tp": 544,
-      "fp": 173,
-      "fn": 17
+    "AADHAAR": {
+      "precision": 1.0,
+      "recall": 0.8421,
+      "f1": 0.9143,
+      "samples": 931,
+      "tp": 784,
+      "fp": 0,
+      "fn": 147
+    },
+    "BANK_ACC": {
+      "precision": 0.9754,
+      "recall": 0.8244,
+      "f1": 0.8935,
+      "samples": 672,
+      "tp": 554,
+      "fp": 14,
+      "fn": 118
+    },
+    "PHONE": {
+      "precision": 0.9874,
+      "recall": 0.8866,
+      "f1": 0.9343,
+      "samples": 1058,
+      "tp": 938,
+      "fp": 12,
+      "fn": 120
     },
     "PERSON": {
-      "precision": 0.9205,
-      "recall": 0.9246,
-      "f1": 0.9225,
-      "samples": 1127,
-      "tp": 1042,
-      "fp": 90,
-      "fn": 85
+      "precision": 0.8237,
+      "recall": 0.9262,
+      "f1": 0.8719,
+      "samples": 1246,
+      "tp": 1154,
+      "fp": 247,
+      "fn": 92
     },
-    "AADHAAR": {
-      "precision": 0.9339,
-      "recall": 0.9523,
-      "f1": 0.943,
-      "samples": 860,
-      "tp": 819,
-      "fp": 58,
-      "fn": 41
+    "GPE": {
+      "precision": 0.9227,
+      "recall": 0.9723,
+      "f1": 0.9469,
+      "samples": 614,
+      "tp": 597,
+      "fp": 50,
+      "fn": 17
     },
     "LOC": {
       "precision": 0.0,
@@ -126,9 +126,9 @@
       "f1": 0.0,
       "samples": 0,
       "tp": 0,
-      "fp": 12,
+      "fp": 14,
       "fn": 0
     }
   },
-  "error_count": 651
+  "error_count": 854
 }

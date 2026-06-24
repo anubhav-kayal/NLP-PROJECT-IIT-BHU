@@ -18,6 +18,13 @@ INDIAN_FIRST_NAMES = [
     "Kritika", "Harsh", "Tanya", "Nikhil", "Shreya", "Akash", "Swati", "Manoj",
     "Divya", "Prakash", "Kiran", "Naveen", "Sudha", "Vijay", "Lalita", "Aman",
     "Ritu", "Tarun", "Jyoti", "Hemant", "Pallavi", "Gaurav", "Shweta", "Dhruv",
+    "Pranav", "Siddharth", "Karthik", "Sahil", "Aravind", "Suman", "Prakash",
+    "Sneha", "Aditi", "Kavya", "Shreya", "Nandini", "Priyanka", "Isha",
+    "Shweta", "Tanya", "Kriti", "Anjali", "Pooja", "Roshni",
+    "Vishal", "Rohan", "Kunal", "Abhishek", "Sandeep", "Nitin", "Varun",
+    "Ankit", "Mukesh", "Sachin", "Ajay", "Vikram", "Lalit", "Rajat",
+    "Bhavna", "Sonali", "Neelam", "Rupali", "Shilpa", "Maya",
+    "Ayesha", "Zara", "Noor", "Sana", "Iqbal", "Faisal", "Irfan",
 ]
 
 INDIAN_LAST_NAMES = [
@@ -30,9 +37,15 @@ INDIAN_LAST_NAMES = [
     "Negi", "Bisht", "Rana", "Bhandari", "Pradhan", "Mahapatra", "Swain",
     "Naidu", "Pillai", "Mohan", "Chandrasekhar", "Subramaniam", "Raghavan",
     "Venkatesan", "Ranganathan", "Varadharajan",
+    "Krishnan", "Iyer", "Mukherjee", "Banerjee", "Bose", "Ghosh", "Chakraborty",
+    "Dasgupta", "Sen", "Roy", "Majumdar", "Bhattacharya", "Sarkar", "Dutta",
+    "Pillai", "Rao", "Murthy", "Shetty", "Hegde", "Bhat", "Pai", "Kamath",
+    "Parekh", "Modi", "Sanghvi", "Lakhani", "Savani", "Vora", "Doshi",
+    "Oberoi", "Bedi", "Sethi", "Sodhi", "Gill", "Dhillon", "Bajwa",
+    "Almeida", "Fernandes", "D'Souza", "Pereira", "Coutinho",
 ]
 
-UPI_HANDLES = ["paytm", "okaxis", "okicici", "ybl", "ibl", "axl", "payu", "upi", "apl", "idfcbank", "icici", "sbi", "hdfc", "kotak", "bob", "pnb", "unionbankofindia", "canara", "dbs", "freecharge", "mobikwik", "phonepe", "googlepay", "amazonpay"]
+UPI_HANDLES = ["paytm", "okaxis", "okicici", "ybl", "ibl", "axl", "payu", "upi", "apl", "idfcbank", "icici", "sbi", "hdfc", "kotak", "bob", "pnb", "unionbankofindia", "canara", "dbs", "freecharge", "mobikwik", "phonepe", "googlepay", "amazonpay", "yesbank", "idbi", "federal", "rbl", "indus", "bandhan", "au", "dhanlaxmi", "janata", "karnataka"]
 UPI_PREFIXES = [
     "vikash.k", "rahul_12", "priya.sharma", "anubhav", "deepak88", "sunita123",
     "rajesh_verma", "pooja.gupta", "amit.singh", "neha.k", "sanjay_m", "kavita_12",
@@ -51,15 +64,24 @@ PAN_SEEDS = ["ABCDE1234F", "BCDFE5678G", "CDEFG6789H", "GHIJK8901K", "HIJKL9012L
     "PQRST7890T", "QRSTU8901U", "RSTUV9012V", "STUVW0123W", "TUVWX1234X", "UVWXY2345Y", "VWXYZ3456Z", "WXYZA4567A", "XYZAB5678B", "YZABC6789C", "ZABCD7890D", "ABCDE8901E",
     "FGHIJ2345K", "KLMNO6789P", "PQRST1234U", "UVWXY5678Z", "ABCDE9012F", "FGHIJ3456L", "KLMNO7890Q", "PQRST2345V", "UVWXY6789A"]
 PHONE_SEEDS = [9876543210, 9988776655, 9876543211, 9876543212, 7766554433, 8877665544, 9988776644, 9876543200, 8765432109, 7654321098, 6543210987, 5432109876,
-    9876543120, 8899001122, 9765432100, 9900112233, 7788996655, 7788990011, 9988776640, 8877665533, 7766554422, 8899112233, 9900223344]
+    9876543120, 8899001122, 9765432100, 9900112233, 7788996655, 7788990011, 9988776640, 8877665533, 7766554422, 8899112233, 9900223344,
+    9988001122, 9876501234, 7766889900, 8899776655, 9988223344, 8877001122, 7766112233, 9900887766, 8877665544, 9988770011, 7766550099]
 IFSC_SEEDS = ["HDFC0001234", "SBIN0001234", "ICIC0002345", "PUNB0001234", "BARB0VJHELL", "SBIN0000456", "HDFC0005678", "ICIC0007890", "AXIS0001234", "KOTB0000654",
     "YESB0000123", "UBIN0009876", "CBIN0001234", "CANB0005678", "IOBA0001234", "SYNB0001234", "FDRL0001234", "DCBL0001234",
-    "DEUT0001234", "HSBC0001234", "SCBL0001234", "CITI0001234", "STBP0001234"]
+    "DEUT0001234", "HSBC0001234", "SCBL0001234", "CITI0001234", "STBP0001234",
+    "IDIB0001234", "UTIB0005678", "ALLA0001234", "ORBC0101234", "INDB0001234",
+    "BOFA0001234", "MHCB0001234", "JAKA0001234", "SVCB0001234", "TJSB0001234",
+    "BKDN0001234", "ESFB0001234", "KARB0001234", "KVGB0001234", "PMCB0001234"]
 EMAIL_LOCAL_PARTS = ["vikash.kayal", "rahul88", "priya.sharma", "anubhav.k", "deepak.kumar", "sunita.verma", "rajesh.singh", "pooja.gupta", "amit.jain", "neha.kapoor",
     "sanjay.malhotra", "kavita.arora", "arjun.mehta", "meera.shah", "rohit.sharma", "anjali.verma", "vivek.singh", "smita.joshi", "suresh.kulkarni", "geeta.desai",
     "mahesh.pandey", "rekha.mishra", "naresh.tiwari", "savita.dubey", "ramesh.chaturvedi", "usha.saxena", "dinesh.srivastava", "lata.agarwal", "pankaj.s77", "nisha_45",
     "contact.vinay", "asha.12", "mohammad.ali", "fatima.ansari", "abdul.k", "zoya.reddy", "imran.khan", "gurpreet.s", "harpreet.kaur", "venkatesh.iit",
-    "lakshmi.nair", "krishna.m", "ravi.shankar", "anand.s", "bharathi.rao"]
+    "lakshmi.nair", "krishna.m", "ravi.shankar", "anand.s", "bharathi.rao",
+    "suman.k", "prakash.r", "aditi.sharma", "isha.nair", "siddharth.jain",
+    "sneha.patil", "aravind.krishnan", "nandini.rao", "harsh.vardhan",
+    "kavya.singh", "pranav.gupta", "shreya.iyer", "sahil.mehta",
+    "priyanka.shah", "roshan.kumar", "anjana.nair", "karthik.s",
+    "shweta.verma", "vishal.joshi", "tanya.gupta", "akash.sharma"]
 DOMAINS = ["gmail.com", "yahoo.co.in", "rediffmail.com", "outlook.com", "iitbhu.ac.in", "hotmail.com", "protonmail.com", "zoho.com", "ymail.com", "rocketmail.com",
     "icloud.com", "godaddy.com", "mygov.in", "nic.in", "gov.in", "ac.in", "edu.in", "co.in", "in.com", "vsnl.net"]
 
@@ -70,8 +92,19 @@ LOCATIONS = [
     "Guwahati", "Coimbatore", "Kochi", "Thiruvananthapuram", "Bhubaneswar",
     "Jodhpur", "Udaipur", "Goa", "Shimla", "Dehradun", "Agra", "Mathura",
     "Gaya", "Bodh Gaya", "Sarnath", "Haridwar", "Rishikesh", "Ayodhya", "Meerut",
-    "Gurgaon", "Noida", "Faridabad", "Ghaziabad", "Kolkata", "Mysore", "Mangalore",
+    "Gurgaon", "Noida", "Faridabad", "Ghaziabad", "Mysore", "Mangalore",
     "Vadodara", "Rajkot", "Jamnagar", "Raipur", "Bilaspur", "Jabalpur", "Ujjain",
+    "Nasik", "Aurangabad", "Solapur", "Kolhapur", "Amravati",
+    "Tiruchirappalli", "Madurai", "Salem", "Tirunelveli",
+    "Hubli", "Belgaum", "Mangaluru", "Shivamogga",
+    "Vijayawada", "Visakhapatnam", "Guntur", "Kurnool", "Warangal", "Kakinada",
+    "Thrissur", "Kozhikode", "Kannur", "Alappuzha", "Kollam",
+    "Siliguri", "Asansol", "Durgapur", "Bardhaman", "Howrah",
+    "Bhilai", "Bilaspur", "Korba", "Raigarh",
+    "Jamshedpur", "Dhanbad", "Bokaro", "Deoghar",
+    "Jhansi", "Aligarh", "Gorakhpur", "Moradabad", "Saharanpur",
+    "Kota", "Bikaner", "Ajmer", "Bhilwara",
+    "Bathinda", "Patiala", "Ludhiana", "Jalandhar", "Mohali", "Panchkula",
 ]
 PINCODES = list(range(110001, 110098)) + list(range(400001, 400091)) + list(range(700001, 700101)) + list(range(560001, 560081)) + list(range(600001, 600091)) + list(range(500001, 500091)) + [221005, 226001, 302001, 380001, 201301, 411001, 682001, 160001, 734001, 800001, 790001, 190001, 144001, 395001, 305001, 173001, 248001, 122001, 281001, 462001]
 
@@ -87,6 +120,15 @@ ORGS = [
     "Delhi University", "JNU", "Jamia Millia Islamia", "AMU", "BITS Pilani",
     "NIT Trichy", "NIT Surathkal", "IIM Ahmedabad", "IIM Bangalore", "IIM Calcutta",
     "AIIMS Delhi", "PGI Chandigarh", "CMC Vellore",
+    "Larsen & Toubro", "Mahindra & Mahindra", "Adani Group", "Bajaj Auto",
+    "Maruti Suzuki", "Tata Motors", "Hindustan Unilever", "ITC Limited",
+    "Coal India", "NTPC Limited", "ONGC", "Indian Oil Corporation",
+    "Air India", "SpiceJet", "IndiGo", "Vistara", "Go First",
+    "MakeMyTrip", "IRCTC", "RedBus", "OYO",
+    "Practo", "PharmEasy", "Netmeds", "1mg",
+    "BYJU'S", "Unacademy", "Vedantu", "UpGrad", "Coursera",
+    "Zepto", "Blinkit", "BigBasket", "Grofers",
+    "Deloitte", "PwC", "EY", "KPMG", "McKinsey", "BCG",
 ]
 
 HINGLISH_TEMPLATES_SINGLE = [
@@ -108,6 +150,23 @@ HINGLISH_TEMPLATES_SINGLE = [
     "Customer ka {pii} {verb} verify karo",
     "Worker ka {pii} {verb} register karo",
     "Staff ka {pii} {verb} collect karo",
+    "Mera {pii} {verb} hai kya",
+    "Tumhara {pii} kya {verb} hai",
+    "Unka {pii} {verb} do na",
+    "Inka {pii} {verb} check karlo",
+    "Iska {pii} {verb} dalo system mein",
+    "Uska {pii} {verb} update karna hai",
+    "Mujhe apna {pii} {verb} hai",
+    "Woh {pii} {verb} diya tha Maine",
+    "Kal tak {pii} {verb} dena",
+    "Abhi {pii} {verb} lo",
+    "Yeh {pii} {verb} rakho apne paas",
+    "Kya aapka {pii} {verb} hai",
+    "Sir aapka {pii} {verb} kya hai",
+    "Madam aapka {pii} please {verb} karo",
+    "Bhaiyya {pii} {verb} dijiye",
+    "Didi aapne {pii} {verb} nahi diya",
+    "Manager sahab ka {pii} {verb} hai",
 ]
 
 HINGLISH_TEMPLATES_DOUBLE = [
@@ -116,6 +175,12 @@ HINGLISH_TEMPLATES_DOUBLE = [
     "{name} ne {pii} {verb} diya aur {pii2} bhi {verb2}",
     "{name} ka {pii} and {pii2} dono verify karo",
     "{name} se {pii} aur {pii2} mangwao",
+    "Mera {pii} {verb} hai aur {pii2} bhi {verb2} hai",
+    "Aapka {pii} {verb} do aur {pii2} bhi {verb2} do",
+    "Mujhe {pii} {verb} hai aur {pii2} {verb2} chahiye",
+    "Pehle {pii} {verb} phir {pii2} {verb2}",
+    "Pahle wala {pii} {verb} aur naya {pii2} {verb2}",
+    "Dono {pii} aur {pii2} ka {verb} karo",
 ]
 
 HINGLISH_CONTEXT = [
@@ -145,6 +210,21 @@ ENGLISH_TEMPLATES_SINGLE = [
     "Update your {pii} to {pii_val}",
     "The {pii} on record is {pii_val}",
     "Please mention your {pii} as {pii_val}",
+    "Let me confirm your {pii} is {pii_val}",
+    "I am sharing my {pii} which is {pii_val}",
+    "Can you please verify my {pii} {pii_val}",
+    "The {pii} associated with this profile is {pii_val}",
+    "Could you update the {pii} to {pii_val}",
+    "I have a new {pii} which is {pii_val}",
+    "You will find my {pii} as {pii_val}",
+    "According to the form my {pii} is {pii_val}",
+    "Make sure to use {pii} {pii_val} for the transaction",
+    "The records show {pii} as {pii_val}",
+    "Do you need my {pii} it is {pii_val}",
+    "I gave you my {pii} earlier it is {pii_val}",
+    "The {pii} mentioned in the document is {pii_val}",
+    "Please correct my {pii} to {pii_val}",
+    "For the application process my {pii} is {pii_val}",
 ]
 
 ENGLISH_TEMPLATES_DOUBLE = [
@@ -158,6 +238,14 @@ ENGLISH_TEMPLATES_DOUBLE = [
     "The registered {pii} is {pii_val} and {pii2} is {pii_val2}",
     "I changed my {pii} to {pii_val} and {pii2} to {pii_val2}",
     "For KYC, my {pii} is {pii_val} and {pii2} is {pii_val2}",
+    "Could you verify my {pii} {pii_val} and {pii2} {pii_val2} together",
+    "I am attaching my {pii} {pii_val} along with {pii2} {pii_val2}",
+    "The system has my {pii} as {pii_val} and {pii2} as {pii_val2}",
+    "Please use my {pii} {pii_val} and {pii2} {pii_val2} for the records",
+    "I provided both {pii} {pii_val} and {pii2} {pii_val2} in the form",
+    "Can you confirm {pii} {pii_val} and {pii2} {pii_val2} are correct",
+    "My registered {pii} is {pii_val} linked with {pii2} {pii_val2}",
+    "For verification here is my {pii} {pii_val} and {pii2} {pii_val2}",
 ]
 
 NO_PII_SENTENCES = [
@@ -177,18 +265,17 @@ NO_PII_SENTENCES = [
     "I am going to the market to buy some vegetables.",
     "The internet connection is very slow today.",
     "Can you help me with this assignment?",
-    "What is the capital of India?",
-    "The train to Delhi departs at 9 PM.",
+    "The train departs at 9 PM from the station.",
     "I love reading books on philosophy.",
     "Please remind me to call my friend tomorrow.",
-    "The sunset at Marine Drive is beautiful.",
+    "The sunset view from the hill is beautiful.",
     "Can you check the weather forecast for this weekend?",
     "I need to recharge my mobile phone with some data.",
     "What is the recipe for butter chicken?",
     "The garden needs to be watered every morning.",
     "Please turn down the volume on the television.",
     "I am learning Python programming these days.",
-    "The flight to Bangalore has been delayed.",
+    "The flight has been delayed due to bad weather.",
     "Can you send me the presentation slides?",
     "I need to book a hotel room for three nights.",
     "What time does the pharmacy open on Sunday?",
@@ -203,7 +290,7 @@ NO_PII_SENTENCES = [
     "What is the exchange rate for US dollars today?",
     "The washing machine is not working properly.",
     "Can you help me move this furniture?",
-    "I am planning a trip to Kerala next month.",
+    "I am planning a trip to the hills next month.",
     "The laptop battery needs to be replaced.",
     "Please send me the agenda for the conference.",
     "The street dogs in our area are very friendly.",
@@ -251,7 +338,7 @@ NO_PII_SENTENCES = [
     "The kite festival is celebrated with great enthusiasm.",
     "Please draft an email to the client regarding the proposal.",
     "I am trying to reduce my screen time before bed.",
-    "The train journey from Delhi to Varanasi is scenic.",
+    "The train journey through the mountains is scenic.",
     "Can you reserve a table for dinner tonight?",
     "I need to find a plumber to fix the bathroom fittings.",
     "The annual day function will be held in the auditorium.",
@@ -260,25 +347,110 @@ NO_PII_SENTENCES = [
     "The meeting has been rescheduled to next Tuesday.",
     "Can you explain the concept of machine learning briefly?",
     "I need to buy stationery supplies for the office.",
-    "The sunrise at the ghats is a mesmerizing sight.",
+    "The sunrise at the river is a mesmerizing sight.",
     "Please ensure the windows are closed before it rains.",
     "I am learning to cook traditional dishes from my grandmother.",
     "The football match ended in a draw.",
     "Can you recommend a good book for improving vocabulary?",
+    "I need to print some documents for the meeting.",
+    "The garbage truck comes every Tuesday morning.",
+    "Can you fix the broken shelf in the living room?",
+    "I am thinking of painting the walls a different color.",
+    "Please order a new mouse for my computer.",
+    "The heating system needs to be serviced before winter.",
+    "Can you help me set up the new television?",
+    "I need to return this jacket it is too small.",
+    "The grass in the backyard needs mowing.",
+    "Please pick up some flowers for the dining table.",
+    "I am looking for a good mechanic for my car.",
+    "Can you teach me how to change a flat tire?",
+    "The smoke detector battery needs replacement.",
+    "I need to organize the files on my computer.",
+    "Please remind me to pay the electricity bill.",
+    "The ceiling fan is making a rattling noise.",
+    "Can you help me assemble this bookshelf?",
+    "I need to backup all my photos to an external drive.",
+    "The sink in the bathroom is clogged again.",
+    "Please check the weather before we plan the picnic.",
+    "I am trying to learn calligraphy as a hobby.",
+    "Can you recommend a good plumber for the house?",
+    "I need to renew my gym membership this month.",
+    "The microwave oven stopped working suddenly.",
+    "Please save the document before closing the program.",
+    "I need to find my old school yearbook for the reunion.",
+    "Can you help me wrap these gifts for the party?",
+    "The battery on my wireless keyboard is dying.",
+    "I need to check the train schedule for tomorrow.",
+    "Please update the software on your phone regularly.",
+    "Can you explain how to use this new application?",
+    "I need to clear out the storage room this weekend.",
+    "The projector bulb needs to be replaced before the presentation.",
+    "Please confirm your availability for next week's session.",
+    "I am thinking of taking a photography course online.",
+    "Can you help me improve my public speaking skills?",
+    "The roof was repaired after last month's storm.",
+    "I need to schedule a haircut appointment for Saturday.",
+    "Please double check the calculations in the spreadsheet.",
+    "Can you recommend a good veterinarian for my cat?",
+    "I am trying to reduce my caffeine intake gradually.",
+    "The refrigerator is making an unusual humming sound.",
+    "Please water the indoor plants once a week.",
+    "I need to sort my wardrobe and donate old clothes.",
+    "Can you help me understand this chemistry concept?",
+    "The windshield wipers on my car need replacement.",
+    "I am looking for a budget friendly smartphone option.",
+    "Please set a reminder for the team standup tomorrow.",
+    "Can you show me how to knit a scarf?",
+    "The internet router needs to be restarted occasionally.",
+    "I need to prepare a list of questions for the interview.",
+    "Please check the quality of the printed materials.",
+    "Can you recommend a good hiking trail nearby?",
+    "The oven temperature seems to be inaccurate lately.",
+    "I need to renew my library books before the due date.",
+    "Please help me move the sofa to the other side.",
+    "Can you teach me some basic phrases in French?",
+    "I need to update my resume for the job application.",
+    "The fire alarm test is scheduled for tomorrow morning.",
+    "Please sort the recyclables into the correct bins.",
+    "Can you help me choose a color scheme for the website?",
+    "The car needs an oil change every five thousand miles.",
+    "I need to buy a birthday card for my grandmother.",
+    "Please organize the pantry by expiry dates.",
+    "Can you recommend a good documentary to watch?",
+    "I am considering starting a vegetable garden this spring.",
+    "The vacuum cleaner filter needs to be cleaned.",
+    "Please check the attic for any signs of leakage.",
+    "Can you help me plan a surprise party for my sister?",
+    "I need to memorize this speech for the event.",
+    "The bicycle chain needs lubrication before the ride.",
+    "Please ensure all windows are locked before leaving.",
+    "Can you help me debug this code snippet?",
+    "I am going to try that new cafe near the office.",
+    "The thermostat should be set to energy saving mode.",
+    "Please remind me to take out the trash tonight.",
+    "Can you recommend a good podcast on science?",
+    "I need to buy a new pair of running shoes.",
+    "The dishwasher detergent is running low.",
+    "Please check if the mailbox has any letters today.",
+    "Can you help me practice for the presentation?",
+    "I am trying to complete a thousand piece puzzle.",
+    "The motion sensor light in the driveway is broken.",
+    "Please add fabric softener to the shopping list.",
+    "Can you teach me how to play chess?",
+    "I need to defrost the freezer this weekend.",
+    "The battery indicator on my laptop is blinking red.",
 ]
 NO_PII_USE_CASE = [
     "Alexa play some music",
     "Hey Google what is the weather today",
     "Turn on the bedroom light",
     "Set a timer for ten minutes",
-    "What time is it in Tokyo right now",
     "Play my morning playlist",
     "Increase the volume to 40 percent",
     "What is the news today",
     "Add eggs to my shopping list",
     "Remind me to call mom at 7 pm",
     "How many steps did I walk today",
-    "What is the capital of France",
     "Tell me a joke",
     "What is the stock price of Reliance",
     "Open the garage door",
@@ -286,8 +458,8 @@ NO_PII_USE_CASE = [
     "What is the meaning of serendipity",
     "Show me photos from last Diwali",
     "Navigate to the nearest petrol pump",
-    "What is the score of the India match",
-    "How do you say thank you in Japanese",
+    "What is the score of the last match",
+    "How do you say thank you in French",
     "What is the recipe for biryani",
     "Send a message to Rohan saying I will be late",
     "Schedule a meeting for tomorrow at 3 PM",
@@ -352,6 +524,11 @@ AADHAAR_CONTEXT = [
     "Enter Aadhaar {aadhaar} in the form",
     "Sending Aadhaar {aadhaar} for eKYC",
     "Use Aadhaar {aadhaar} for the LPG subsidy",
+    "My UIDAI number is {aadhaar}",
+    "The unique ID is {aadhaar}",
+    "Please link my Aadhaar {aadhaar} to the account",
+    "I verified using Aadhaar {aadhaar}",
+    "The biometric ID is {aadhaar}",
 ]
 
 PAN_CONTEXT = [
@@ -373,6 +550,12 @@ PAN_CONTEXT = [
     "Tax returns filed with PAN {pan} last year",
     "GST registration uses my PAN {pan}",
     "Business partnership deed includes PAN {pan}",
+    "The permanent account number is {pan}",
+    "My IT department PAN is {pan}",
+    "Please note my PAN for tax purposes {pan}",
+    "The PAN linked to my demat account is {pan}",
+    "I filed my returns using PAN {pan}",
+    "Foreign remittance requires PAN {pan}",
 ]
 
 PHONE_CONTEXT = [
@@ -396,6 +579,14 @@ PHONE_CONTEXT = [
     "OTP has been sent to {phone}",
     "The delivery boy will call at {phone}",
     "You can SMS your complaint to {phone}",
+    "My contact detail is {phone}",
+    "The number to reach me is {phone}",
+    "You can WhatsApp me on {phone}",
+    "Give me a call at {phone}",
+    "Reach out to me on {phone}",
+    "My direct line is {phone}",
+    "The reception can be reached at {phone}",
+    "Please call this number {phone} for inquiries",
 ]
 
 UPI_CONTEXT = [
@@ -478,6 +669,15 @@ BANK_ACC_CONTEXT = [
     "The vendor account is {bank}",
     "I hold a joint account {bank}",
     "NEFT to account number {bank}",
+    "My account number for deposits is {bank}",
+    "The bank account linked is {bank}",
+    "Please process the payment to account {bank}",
+    "Direct deposit to account {bank}",
+    "Transfer funds to this account {bank}",
+    "The checking account number is {bank}",
+    "Our company account is {bank}",
+    "The escrow account number is {bank}",
+    "Monthly credit to account {bank}",
 ]
 
 PINCODE_CONTEXT = [
@@ -540,6 +740,12 @@ MIXED_PARAGRAPHS = [
     "New employee {name} joining {org} in {loc}. Aadhaar {aadhaar} and PAN {pan} submitted for background check. Personal email {email} and mobile {phone}. Salary account {bank} with IFSC {ifsc}. UPI {upi} for expense reimbursements. Home pincode {pincode}.",
     "Vendor {name} registration form. Aadhaar {aadhaar} PAN {pan}. Business location {loc} pincode {pincode}. Payment via NEFT to account {bank} IFSC {ifsc}. UPI {upi} for small payments. Contact {phone} and email {email} for purchase orders. GST linked to PAN {pan}.",
     "Tax filing for {name} PAN {pan}. Aadhaar {aadhaar} linked. Refund to account {bank} IFSC {ifsc}. Contact {phone} and email {email}. Address {loc} pincode {pincode}. Previous year returns filed from this location. UPI {upi} used for tax payment.",
+    "Passenger {name} travelling to {loc}. Booking reference linked to PAN {pan} and Aadhaar {aadhaar}. Contact number {phone}. Boarding pass sent to {email}. Payment via card ending {bank}. UPI {upi} used for baggage fees.",
+    "Insurance policy holder {name}. Policy linked to Aadhaar {aadhaar} and PAN {pan}. Premium payment from account {bank} IFSC {ifsc}. SMS alerts on {phone}. Email correspondence to {email}. Address pincode {pincode} in {loc}. Nominee notified via UPI {upi}.",
+    "Job application from {name}. Submitted Aadhaar {aadhaar} PAN {pan} for background check. Reference contact {phone}. Offer letter sent to {email}. Relocating to {loc} from current city. Salary account {bank} IFSC {ifsc}. Joining bonus via UPI {upi}.",
+    "Telecom subscriber {name}. Aadhaar {aadhaar} used for eKYC. Billing address pincode {pincode} in {loc}. Autopay from account {bank} IFSC {ifsc}. Service alerts to {phone} and {email}. UPI {upi} for prepaid recharges.",
+    "Rental agreement for {name}. Aadhaar {aadhaar} and PAN {pan} copies attached. Security deposit from account {bank} IFSC {ifsc}. Monthly rent via UPI {upi}. Contact {phone} for maintenance. Utility bills sent to {email}. Property location pincode {pincode}.",
+    "Hospital registration for {name}. Emergency contact {phone}. Medical reports to {email}. Insurance claim via PAN {pan} and Aadhaar {aadhaar}. Bill payment from account {bank} IFSC {ifsc}. Pharmacy delivery UPI {upi}. Home pincode {pincode} in {loc}.",
 ]
 
 CASTE_RELIGION_VALUES = [
@@ -601,7 +807,7 @@ def format_phone(num):
         return "0" + s
     return s
 
-HINGLISH_VERBS = ["hai", "diya", "liya", "karo", "check karo", "submit karo", "manga", "bhejo", "dalo", "rakho", "likho", "do", "lo", "dikhao"]
+HINGLISH_VERBS = ["hai", "diya", "liya", "karo", "check karo", "submit karo", "manga", "bhejo", "dalo", "rakho", "likho", "do", "lo", "dikhao", "le lo", "de do", "dal do", "nikal lo", "batao", "likh do", "daal do", "kar do", "le aao"]
 
 def make_hinglish(pii, pii_val, label):
     temp = random.choice(HINGLISH_TEMPLATES_SINGLE)
@@ -733,7 +939,7 @@ def make_paragraph(items):
     safe = " ".join(str(v) for v in mapped.values())
     return safe if safe else "General conversation today."
 
-def generate_dataset(total=7000):
+def generate_dataset(total=7500):
     samples = []
     label = None
     
@@ -855,7 +1061,7 @@ def generate_dataset(total=7000):
 
 if __name__ == "__main__":
     random.seed(42)
-    samples = generate_dataset(7000)
+    samples = generate_dataset(7500)
     
     with open("test_dataset_7000.json", "w") as f:
         json.dump({"samples": samples}, f, indent=2)

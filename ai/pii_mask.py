@@ -187,7 +187,7 @@ class PIIMask:
         "MUSLIM","HINDU","SIKH","CHRISTIAN","JAIN","BUDDHIST","PARSI",
         "ISLAM","ISLAMIC","DHARMIC","ATHEIST","SPIRITUAL",
         "OBC","SC","ST","GENERAL","EWS","CREAMY","NON-CREAMY",
-        "DALIT","ADIVASI","TRIBE","FORWARD","BACKWARD","MINORITY",
+        "DALIT","ADIVASI","TRIBE","MINORITY",
         "UPPER CASTE","LOWER CASTE","RESERVED","UNRESERVED",
         "हिंदू","मुसलमान","सिख","ईसाई","बौद्ध","जैन","यादव",
         "ठाकुर","जाट","गुर्जर","मराठा","कुर्मी","कोइरी","चौधरी",
@@ -307,10 +307,11 @@ class PIIMask:
         "nine","ten","first","second","third","last","next",
         "mister","mr","mrs","ms","dr","doctor","sir","madam","ma'am",
         "brother","sister","father","mother","uncle","aunt",
-        "manager","owner","admin","user","customer","client",
+        "manager","owner","admin","user",        "customer","client",
         "colleague","friend","partner","spouse","wife","husband",
         "self","helped","like","reply","provided","joined",
         "works","worked","working","based","located","joined",
+        "bhaiyya","customer",
         "from","into","about","with","without","through",
         "staff","didi","bhai","bhaiya","boss","sir","madam",
         "mam","teacher","professor","principal","director",
@@ -424,9 +425,46 @@ class PIIMask:
         return c.isupper() or c.isdigit()
 
     def _collapse_digit_spaces(self, text: str):
-        """Remove spaces between consecutive uppercase letters or digits for regex matching.
-        Handles spaced-out PAN (A B C D E 1 2 3 4 F) and phone/Aadhaar digits.
+        """Collapse spaces between consecutive digits or digit-uppercase transitions.
+        Preserves uppercase-uppercase spaces to avoid merging context words (e.g. 'PAN')
+        with PAN number text (e.g. 'PAN ABCDE1234F' stays separate for word boundary).
+        Limits digit-digit collapse to runs of at most 10 digits to avoid merging
+        adjacent PII entities (e.g. AADHAAR + PINCODE) into one long digit blob.
         Returns (collapsed_text, char_map) where char_map[i] = original_position.
+        """
+        collapsed = []
+        char_map = []
+        i = 0
+        digit_run = 0
+        while i < len(text):
+            c = text[i]
+            if c == ' ' and i > 0 and i < len(text) - 1:
+                prev_upper = text[i-1].isupper()
+                next_upper = text[i+1].isupper()
+                prev_digit = text[i-1].isdigit()
+                next_digit = text[i+1].isdigit()
+                if prev_digit and next_digit and digit_run < 10:
+                    i += 1
+                    digit_run += 1
+                    continue
+                if (prev_digit and next_upper) or (prev_upper and next_digit):
+                    i += 1
+                    if prev_digit:
+                        digit_run += 1
+                    continue
+            collapsed.append(c)
+            char_map.append(i)
+            if c.isdigit():
+                digit_run += 1
+            else:
+                digit_run = 0
+            i += 1
+        return ''.join(collapsed), char_map
+
+    def _try_collapse_pan_letters(self, text: str):
+        """Separate pass for PAN letter-by-letter input like 'A B C D E 1 2 3 4 F'.
+        Only collapses spaces where the result matches a PAN-like pattern.
+        Returns (collapsed_text, char_map) or (text, identity_map) if no match.
         """
         collapsed = []
         char_map = []
@@ -434,13 +472,26 @@ class PIIMask:
         while i < len(text):
             c = text[i]
             if c == ' ' and i > 0 and i < len(text) - 1:
-                if self._is_upper_or_digit(text[i-1]) and self._is_upper_or_digit(text[i+1]):
+                if text[i-1].isupper() and text[i+1].isupper():
                     i += 1
                     continue
             collapsed.append(c)
             char_map.append(i)
             i += 1
-        return ''.join(collapsed), char_map
+        result = ''.join(collapsed)
+        pan_pat = r'\b[A-Z]{5}[0-9]{4}[A-Z]{1}\b'
+        if re.search(pan_pat, result):
+            return result, char_map
+        return text, list(range(len(text)))
+
+    @staticmethod
+    def _kw_match(text: str, keywords: set) -> bool:
+        """Check if any keyword appears as a whole word in text."""
+        text_lower = text.lower()
+        return any(
+            re.search(r'(?<!\w)' + re.escape(kw) + r'(?!\w)', text_lower)
+            for kw in keywords
+        )
 
     def _skip_rule_match(self, text, match_text, match_start, label):
         if label == "BANK_ACC":
@@ -453,41 +504,76 @@ class PIIMask:
             if match_start > 0 and text[match_start - 1] == "+":
                 return True
             context = self._context_around(text, match_start)
-            has_aadhaar_kw = any(kw in context for kw in self.AADHAAR_KEYWORDS)
-            has_bank_kw = any(kw in context for kw in self.BANK_ACC_KEYWORDS)
+            has_aadhaar_kw = self._kw_match(context, self.AADHAAR_KEYWORDS)
+            has_bank_kw = self._kw_match(context, self.BANK_ACC_KEYWORDS)
             if has_bank_kw and not has_aadhaar_kw:
                 return True
             matched_digits = re.sub(r"\s+", "", match_text)
-            if len(matched_digits) == 12 and not has_aadhaar_kw and not has_bank_kw:
-                wide_context = self._context_around_wide(text, match_start)
-                has_aadhaar_kw_wide = any(kw in wide_context for kw in self.AADHAAR_KEYWORDS)
-                has_bank_kw_wide = any(kw in wide_context for kw in self.BANK_ACC_KEYWORDS)
-                if has_bank_kw_wide and not has_aadhaar_kw_wide:
+            if len(matched_digits) == 12:
+                has_spaces = bool(re.search(r"\s", match_text))
+                text_before = text[max(0, match_start - 40):match_start]
+                text_after = text[match_start + len(match_text):match_start + len(match_text) + 40]
+                has_aadhaar_before = self._kw_match(text_before, self.AADHAAR_KEYWORDS)
+                has_bank_before = self._kw_match(text_before, self.BANK_ACC_KEYWORDS)
+                has_aadhaar_after = self._kw_match(text_after, self.AADHAAR_KEYWORDS)
+                has_bank_after = self._kw_match(text_after, self.BANK_ACC_KEYWORDS)
+                if not has_spaces:
+                    if has_aadhaar_before and not has_bank_before:
+                        return False
+                    if has_bank_before:
+                        return True
+                    if has_aadhaar_after and not has_bank_after:
+                        return False
                     return True
+                else:
+                    if has_bank_before and not has_aadhaar_before:
+                        return True
+                    if has_aadhaar_before:
+                        return False
+                    if has_bank_after and not has_aadhaar_after:
+                        return True
+                    return False
         return False
 
     def _rule_based_spans(self, text: str) -> List[RedactedSpan]:
-        collapsed, char_map = self._collapse_digit_spaces(text)
         spans = []
-        for label, pattern in self.INDIAN_PII_PATTERNS.items():
-            for match in re.finditer(pattern, collapsed):
-                orig_start = char_map[match.start()]
-                orig_end = char_map[match.end() - 1] + 1
-                orig_text = text[orig_start:orig_end]
-                if self._skip_rule_match(text, orig_text, orig_start, label):
-                    continue
-                spans.append(RedactedSpan(
-                    start=orig_start, end=orig_end,
-                    text=orig_text, label=label, confidence=1.0
-                ))
-        for label, pattern in self.INDIAN_PII_PATTERNS_HINDI.items():
-            for match in re.finditer(pattern, collapsed):
-                orig_start = char_map[match.start()]
-                orig_end = char_map[match.end() - 1] + 1
-                spans.append(RedactedSpan(
-                    start=orig_start, end=orig_end,
-                    text=text[orig_start:orig_end], label=label, confidence=1.0
-                ))
+
+        def add_matches(collapsed_text: str, char_map: list):
+            for label, pattern in self.INDIAN_PII_PATTERNS.items():
+                for match in re.finditer(pattern, collapsed_text):
+                    orig_start = char_map[match.start()]
+                    orig_end = char_map[match.end() - 1] + 1
+                    orig_text = text[orig_start:orig_end]
+                    if self._skip_rule_match(text, orig_text, orig_start, label):
+                        continue
+                    spans.append(RedactedSpan(
+                        start=orig_start, end=orig_end,
+                        text=orig_text, label=label, confidence=1.0
+                    ))
+            for label, pattern in self.INDIAN_PII_PATTERNS_HINDI.items():
+                for match in re.finditer(pattern, collapsed_text):
+                    orig_start = char_map[match.start()]
+                    orig_end = char_map[match.end() - 1] + 1
+                    spans.append(RedactedSpan(
+                        start=orig_start, end=orig_end,
+                        text=text[orig_start:orig_end], label=label, confidence=1.0
+                    ))
+
+        # Pass 1: digit-collapsed text (handles phone/Aadhaar digit spacing safely)
+        text1, map1 = self._collapse_digit_spaces(text)
+        add_matches(text1, map1)
+
+        # Pass 2: PAN letter-collapsed text (only if it reveals new PAN matches)
+        text2, map2 = self._try_collapse_pan_letters(text)
+        if text2 != text:
+            existing_spans = set((s.start, s.end, s.label) for s in spans)
+            before = len(spans)
+            add_matches(text2, map2)
+            new_spans = [(s.start, s.end, s.label) for s in spans
+                         if (s.start, s.end, s.label) not in existing_spans]
+            if not new_spans:
+                spans = spans[:before]
+
         return spans
 
     def _context_around(self, text: str, pos: int, window: int = 80) -> str:
@@ -587,7 +673,7 @@ class PIIMask:
                 spans.append(RedactedSpan(
                     start=t_start, end=t_end, text=tok, label="PERSON", confidence=0.85
                 ))
-            elif lower in all_last_lower and lower not in all_first_lower and lower not in not_person_lower and lower not in caste_lower and lower not in medical_lower:
+            elif lower in all_last_lower and lower not in all_first_lower and lower not in not_person_lower and lower not in medical_lower:
                 spans.append(RedactedSpan(
                     start=t_start, end=t_end, text=tok, label="PERSON", confidence=0.75
                 ))
@@ -595,7 +681,7 @@ class PIIMask:
                 spans.append(RedactedSpan(
                     start=t_start, end=t_end, text=tok, label="GPE", confidence=0.85
                 ))
-            elif lower in caste_lower:
+            elif lower in caste_lower and lower not in all_last_lower:
                 spans.append(RedactedSpan(
                     start=t_start, end=t_end, text=tok, label="CASTE_RELIGION", confidence=0.85
                 ))
@@ -654,8 +740,16 @@ class PIIMask:
                 caste_lower = {c.lower() for c in self.CASTE_RELIGION_TERMS}
                 if ent_lower in caste_lower:
                     continue
-            if ent.label_ == "GPE" and ent.text.strip().lower() in self.NOT_GPE_WORDS | self.NOT_GPE_WORDS_SPACY:
-                continue
+            if ent.label_ == "GPE":
+                ent_lower = ent.text.strip().lower()
+                if ent_lower in self.NOT_GPE_WORDS | self.NOT_GPE_WORDS_SPACY:
+                    continue
+                caste_lower = {c.lower() for c in self.CASTE_RELIGION_TERMS}
+                if ent_lower in caste_lower:
+                    continue
+                orgs_lower = {o.lower() for o in self.INDIAN_ORGS}
+                if ent_lower in orgs_lower:
+                    continue
             spans.append(RedactedSpan(
                 start=ent.start_char,
                 end=ent.end_char,

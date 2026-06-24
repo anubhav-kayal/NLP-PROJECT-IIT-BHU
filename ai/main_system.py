@@ -41,7 +41,7 @@ BEEP_FREQUENCIES = {
 
 class FixedRecordAssistant:
 
-    def __init__(self, context_mode="all", whitelist=None, audit=None, consent=False):
+    def __init__(self, context_mode="all", whitelist=None, audit=None, consent=False, model_size="tiny"):
         print("=" * 60)
         print("  PRIVACY-PRESERVING VOICE ASSISTANT (Fixed-Record Mode)")
         print("  Loading models...")
@@ -50,8 +50,8 @@ class FixedRecordAssistant:
         print("\n1. Loading PII Filter (spaCy + Indian rules)...")
         self.pii = PIIMask(context_mode=context_mode)
 
-        print("\n2. Loading Whisper (small)...")
-        self.transcriber = LocalTranscriber(model_size="small")
+        print(f"\n2. Loading Whisper ({model_size})...")
+        self.transcriber = LocalTranscriber(model_size=model_size)
 
         print("\n3. Loading Speaker Diarizer...")
         self.diarizer = SpeakerDiarizer()
@@ -265,8 +265,8 @@ if __name__ == "__main__":
     parser.add_argument("--echo-cancel", action="store_true",
                         help="Enable acoustic echo cancellation (NLMS adaptive filter)")
     parser.add_argument("--model-size", choices=["tiny", "base", "small", "medium", "large"],
-                        default="base",
-                        help="Whisper model size (default: base, faster than small for streaming)")
+                        default="tiny",
+                        help="Whisper model size (default: tiny, ~1s per 3s window for streaming)")
     args = parser.parse_args()
 
     if args.view_audit:
@@ -337,6 +337,7 @@ if __name__ == "__main__":
             whitelist=wl,
             audit=audit,
             consent=args.consent,
+            model_size=args.model_size,
         )
         assistant.run()
     else:
