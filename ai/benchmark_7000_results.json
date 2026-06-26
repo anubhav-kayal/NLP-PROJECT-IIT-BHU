@@ -3,23 +3,23 @@
     "size": 7500
   },
   "overall": {
-    "avg_inference_ms": 6.54,
-    "precision": 0.9499,
-    "recall": 0.8714,
-    "f1": 0.9089,
-    "true_positives": 8413,
-    "false_positives": 444,
-    "false_negatives": 1242
+    "avg_inference_ms": 2.34,
+    "precision": 0.9669,
+    "recall": 0.9022,
+    "f1": 0.9335,
+    "true_positives": 8711,
+    "false_positives": 298,
+    "false_negatives": 944
   },
   "per_category": {
     "ORG": {
-      "precision": 0.8164,
-      "recall": 0.7572,
-      "f1": 0.7857,
+      "precision": 0.8515,
+      "recall": 0.9089,
+      "f1": 0.8793,
       "samples": 593,
-      "tp": 449,
-      "fp": 101,
-      "fn": 144
+      "tp": 539,
+      "fp": 94,
+      "fn": 54
     },
     "PAN": {
       "precision": 1.0,
@@ -32,21 +32,21 @@
     },
     "PINCODE": {
       "precision": 1.0,
-      "recall": 0.7532,
-      "f1": 0.8593,
+      "recall": 0.9838,
+      "f1": 0.9918,
       "samples": 616,
-      "tp": 464,
+      "tp": 606,
       "fp": 0,
-      "fn": 152
+      "fn": 10
     },
     "IFSC": {
       "precision": 1.0,
-      "recall": 0.7596,
-      "f1": 0.8634,
+      "recall": 0.7568,
+      "f1": 0.8616,
       "samples": 732,
-      "tp": 556,
+      "tp": 554,
       "fp": 0,
-      "fn": 176
+      "fn": 178
     },
     "UPI_ID": {
       "precision": 1.0,
@@ -58,13 +58,13 @@
       "fn": 0
     },
     "CASTE_RELIGION": {
-      "precision": 0.9882,
-      "recall": 0.747,
-      "f1": 0.8508,
+      "precision": 0.949,
+      "recall": 0.8854,
+      "f1": 0.9161,
       "samples": 672,
-      "tp": 502,
-      "fp": 6,
-      "fn": 170
+      "tp": 595,
+      "fp": 32,
+      "fn": 77
     },
     "EMAIL": {
       "precision": 1.0,
@@ -77,48 +77,48 @@
     },
     "AADHAAR": {
       "precision": 1.0,
-      "recall": 0.8421,
-      "f1": 0.9143,
+      "recall": 0.84,
+      "f1": 0.913,
       "samples": 931,
-      "tp": 784,
+      "tp": 782,
       "fp": 0,
-      "fn": 147
+      "fn": 149
     },
     "BANK_ACC": {
-      "precision": 0.9754,
-      "recall": 0.8244,
-      "f1": 0.8935,
+      "precision": 0.9818,
+      "recall": 0.8036,
+      "f1": 0.8838,
       "samples": 672,
-      "tp": 554,
-      "fp": 14,
-      "fn": 118
+      "tp": 540,
+      "fp": 10,
+      "fn": 132
     },
     "PHONE": {
-      "precision": 0.9874,
-      "recall": 0.8866,
-      "f1": 0.9343,
+      "precision": 0.9873,
+      "recall": 0.8819,
+      "f1": 0.9316,
       "samples": 1058,
-      "tp": 938,
+      "tp": 933,
       "fp": 12,
-      "fn": 120
+      "fn": 125
     },
     "PERSON": {
-      "precision": 0.8237,
-      "recall": 0.9262,
-      "f1": 0.8719,
+      "precision": 0.9142,
+      "recall": 0.9238,
+      "f1": 0.919,
       "samples": 1246,
-      "tp": 1154,
-      "fp": 247,
-      "fn": 92
+      "tp": 1151,
+      "fp": 108,
+      "fn": 95
     },
     "GPE": {
-      "precision": 0.9227,
-      "recall": 0.9723,
-      "f1": 0.9469,
+      "precision": 0.9551,
+      "recall": 0.9707,
+      "f1": 0.9628,
       "samples": 614,
-      "tp": 597,
-      "fp": 50,
-      "fn": 17
+      "tp": 596,
+      "fp": 28,
+      "fn": 18
     },
     "LOC": {
       "precision": 0.0,
@@ -130,5 +130,5 @@
       "fn": 0
     }
   },
-  "error_count": 854
+  "error_count": 667
 }
