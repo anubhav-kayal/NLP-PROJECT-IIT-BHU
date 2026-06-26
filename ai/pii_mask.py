@@ -156,6 +156,15 @@ class PIIMask:
         "IIT Bombay","IIT Delhi","IIT Kanpur","IIT Madras",
         "Apollo","Apollo Hospitals","Fortis","Fortis Healthcare",
         "Max Hospital","Medanta","Manipal Hospital","Narayana Health",
+        "Coursera","Practo","PharmEasy","Netmeds","1mg",
+        "Zepto","Blinkit","BigBasket","Grofers",
+        "IndiGo","SpiceJet","Go First","Vistara","Air India",
+        "IIM Ahmedabad","IIM Bangalore","IIM Calcutta","IIM Lucknow","IIM Kozhikode",
+        "Hindustan Unilever","ITC Limited","Coal India","NTPC Limited",
+        "EY","PwC","Deloitte","KPMG","McKinsey","BCG",
+        "MakeMyTrip","BookMyShow","RedBus",
+        "BharatPe","CRED","Meesho","Nykaa","Urban Company","PolicyBazaar",
+        "Rapido","OYO","OYO Rooms","PharmEasy","UpGrad",
     }
 
     ORG_FP_KEYWORDS_EXTRA = {
@@ -192,6 +201,10 @@ class PIIMask:
         "हिंदू","मुसलमान","सिख","ईसाई","बौद्ध","जैन","यादव",
         "ठाकुर","जाट","गुर्जर","मराठा","कुर्मी","कोइरी","चौधरी",
         "अग्रवाल","बनिया","दलित","आदिवासी","पिछड़ा","सामान्य",
+        "CHAKRABORTY","BANERJEE","MUKHERJEE","GHOSH","ROY","BOSE",
+        "CHAUHAN","SINGH","DESHMUKH","JOSHI","PANDEY","KAPOOR",
+        "MALHOTRA","BHATIA","CHOPRA","BAJAJ","KOHLI","CHATURVEDI",
+        "SAXENA","SRIVASTAVA",
     }
 
     MEDICAL_TERMS = {
@@ -325,6 +338,20 @@ class PIIMask:
         "guard","watchman","driver","pilot","steward","attendant",
         "nurse","compound","sweeper","peon","clerk","staff",
         "minister","secretary","commissioner","mayor","counselor",
+        "kal","ink","unka","iska","uska","inka","mera","mujhe","apna",
+        "teri","tere","aapka","aapne","tumhara","unhone","inhone",
+        "yeh","kya","bhai","aaj","raat","subah","shaam","dopahar",
+        "aap","hum","unka","iski","uski","inki","unki","meri",
+        "batao","karo","lo","do","rakho","likho","dalo","dikhao",
+        "diya","liya","manga","hai","hain","ho","tha","the","thi",
+        "ka","ke","ki","ko","se","mein","me","par","aur","ya","to",
+        "bhi","hi","abhi","kal","aaj","sahab","sahib","ji",
+        "haan","nahi","hoga","kar","karke","karna","karne",
+        "Ola","Coursera","Jio","Zomato","Practo","BYJU'S","Unacademy",
+        "Vedantu","UpGrad","Rapido","CRED","Meesho","Nykaa",
+        "PharmEasy","Netmeds","Zepto","Blinkit","BigBasket",
+        "MakeMyTrip","RedBus","BookMyShow",
+        "Trichy","Surathkal","Vellore",
     }
 
     NOT_GPE_WORDS = {
@@ -355,6 +382,13 @@ class PIIMask:
     }
 
     CONFIDENCE_THRESHOLD = 0.75
+
+    CASTE_CONTEXT_KEYWORDS = {
+        "caste","community","jati","jaati","category","background",
+        "traditionally","reservation","reserved","belong","belongs",
+        "belonging","by caste","by background","jaati","varna",
+        "jati","biradari","gotra","vansh","lineage",
+    }
 
     DISCLOSURE_SIGNALS = {
         "my","mine","our","ours","myself","your","yours",
@@ -503,6 +537,11 @@ class PIIMask:
         if label == "AADHAAR":
             if match_start > 0 and text[match_start - 1] == "+":
                 return True
+            matched_digits = re.sub(r"\s+", "", match_text)
+            if len(matched_digits) == 12:
+                before_text = text[max(0, match_start-4):match_start].strip()
+                if before_text == "91":
+                    return True
             context = self._context_around(text, match_start)
             has_aadhaar_kw = self._kw_match(context, self.AADHAAR_KEYWORDS)
             has_bank_kw = self._kw_match(context, self.BANK_ACC_KEYWORDS)
@@ -563,16 +602,36 @@ class PIIMask:
         text1, map1 = self._collapse_digit_spaces(text)
         add_matches(text1, map1)
 
-        # Pass 2: PAN letter-collapsed text (only if it reveals new PAN matches)
+        # Pass 2: PAN letter-collapsed text (only if it reveals new PAN matches).
+        # Only PAN pattern is matched here — other patterns (IFSC, etc.) can have
+        # their word boundaries destroyed by uppercase-uppercase collapse.
         text2, map2 = self._try_collapse_pan_letters(text)
         if text2 != text:
             existing_spans = set((s.start, s.end, s.label) for s in spans)
-            before = len(spans)
-            add_matches(text2, map2)
-            new_spans = [(s.start, s.end, s.label) for s in spans
-                         if (s.start, s.end, s.label) not in existing_spans]
-            if not new_spans:
-                spans = spans[:before]
+            pan_pat = self.INDIAN_PII_PATTERNS["PAN"]
+            for match in re.finditer(pan_pat, text2):
+                orig_start = map2[match.start()]
+                orig_end = map2[match.end() - 1] + 1
+                orig_text = text[orig_start:orig_end]
+                key = (orig_start, orig_end, "PAN")
+                if key not in existing_spans:
+                    spans.append(RedactedSpan(
+                        start=orig_start, end=orig_end,
+                        text=orig_text, label="PAN", confidence=1.0
+                    ))
+
+        # Pass 3: PINCODE-only pass on original text (catches PINCODEs adjacent
+        # to longer digit sequences that lose their word boundary after collapse)
+        pincode_pat = self.INDIAN_PII_PATTERNS["PINCODE"]
+        existing_pincode = set((s.start, s.end) for s in spans if s.label == "PINCODE")
+        for match in re.finditer(pincode_pat, text):
+            if (match.start(), match.end()) not in existing_pincode:
+                digit_run = len(re.sub(r"\s+", "", text[match.start():match.end()]))
+                if digit_run == 6:
+                    spans.append(RedactedSpan(
+                        start=match.start(), end=match.end(),
+                        text=match.group(), label="PINCODE", confidence=1.0
+                    ))
 
         return spans
 
@@ -610,6 +669,8 @@ class PIIMask:
 
         not_person_lower = {w.lower() for w in self.NOT_PERSON_WORDS}
         not_gpe_lower = {w.lower() for w in self.NOT_GPE_WORDS}
+
+        caste_context_lower = {w.lower() for w in self.CASTE_CONTEXT_KEYWORDS}
 
         orgs_lower = {o.lower() for o in self.INDIAN_ORGS}
         orgs_by_first_word = {}
@@ -673,6 +734,17 @@ class PIIMask:
                 spans.append(RedactedSpan(
                     start=t_start, end=t_end, text=tok, label="PERSON", confidence=0.85
                 ))
+            elif lower in caste_lower and lower in all_last_lower and lower not in all_first_lower:
+                window = text[max(0, t_start-80):min(len(text), t_end+80)].lower()
+                is_caste_context = any(kw in window for kw in caste_context_lower)
+                if is_caste_context:
+                    spans.append(RedactedSpan(
+                        start=t_start, end=t_end, text=tok, label="CASTE_RELIGION", confidence=0.85
+                    ))
+                elif lower not in not_person_lower and lower not in medical_lower:
+                    spans.append(RedactedSpan(
+                        start=t_start, end=t_end, text=tok, label="PERSON", confidence=0.75
+                    ))
             elif lower in all_last_lower and lower not in all_first_lower and lower not in not_person_lower and lower not in medical_lower:
                 spans.append(RedactedSpan(
                     start=t_start, end=t_end, text=tok, label="PERSON", confidence=0.75
